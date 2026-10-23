@@ -113,8 +113,11 @@ rpa|enabled
 ```
 
 *Interpretation:*
-* If `trk_on` is `disabled`, tracking is currently **ACTIVE (ON)**.
-* If `park` is `enabled` and `unpark` is `disabled`, the mount is currently **UNPARKED**.
+* If `trk_on` is `disabled`, tracking is currently **ACTIVE (ON)**. This matches the dashboard in both samples.
+* Don't read `park`/`unpark` as the parking state. Both samples show **Not Parked** on the dashboard, with opposite button states:
+  * `park|enabled`, `unpark|disabled` (stock dump in `raw_stock_ui/`): dashboard "Not Parked", tracking On.
+  * `park|disabled`, `unpark|enabled` (2026-10-23 probe): dashboard "Not Parked (At Home)", tracking Off.
+* To check parking, read the `Parking:` line on `index.htm`, or the `:GU#` status letter: `P` = parked, `p` = not parked ([OnStep command reference](https://onstep.groups.io/g/main/wiki/23755)).
 
 ---
 
