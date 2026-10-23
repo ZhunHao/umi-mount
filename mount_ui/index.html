@@ -3,240 +3,406 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>UMi 17 Control</title>
+<title>UMi 17 Lite</title>
 <style>
+/* Red-only palette: the screen stays dark and the only hue is red, so it doesn't wreck night vision. */
 :root {
-  --bg: #000; --card: #121212; --line: #551111; --txt: #dcdcdc; --dim: #8c8c8c;
-  --red: #b02020; --red-hi: #ff4d4d; --ok: #4caf50; --bad: #ff6b6b; --warn: #ffb300;
+  --bg: #000;
+  --raised: #150605;
+  --pressed: #2a0b09;
+  --line: #3a1210;
+  --line-soft: #1f0908;
+  --label: #b5604f;
+  --ink: #ff8a73;
+  --ink-strong: #ffc1b2;
+  --accent: #b8291d;
+  --accent-hi: #ff5a44;
+  --stop: #d3200f;
+  --sans: "Avenir Next", "Helvetica Neue", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--txt); font: 15px/1.4 -apple-system, system-ui, sans-serif; }
-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
-h1 { font-size: 18px; margin: 0; color: var(--red-hi); }
-h2 { font-size: 16px; margin: 0 0 10px; color: var(--red-hi); }
-h3 { font-size: 13px; margin: 14px 0 6px; color: var(--dim); text-transform: uppercase; letter-spacing: .04em; }
-main { display: grid; gap: 14px; padding: 14px 16px 40px; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); max-width: 1200px; margin: 0 auto; }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
-.card.wide { grid-column: 1 / -1; }
-.pill { padding: 3px 10px; border-radius: 99px; font-size: 13px; background: #222; color: var(--dim); }
-.pill.ok { background: #1d3d20; color: var(--ok); }
-.pill.bad { background: #3d1d1d; color: var(--bad); }
-.dim { color: var(--dim); font-size: 13px; }
-.warnbar { background: #2e2410; color: var(--warn); border: 1px solid #6b4f10; border-radius: 8px; padding: 10px 12px; font-size: 14px; }
-.stop { width: 100%; min-height: 72px; font-size: 22px; font-weight: 800; letter-spacing: .05em; background: var(--red); color: #fff; border: 3px solid #ff4d4d; border-radius: 12px; }
-button { min-height: 44px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line); background: #1e1e1e; color: var(--txt); font: inherit; cursor: pointer; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
-button:disabled { opacity: .35; cursor: default; }
-button.current { background: var(--red); color: #fff; border-color: var(--red-hi); }
+html { background: var(--bg); }
+body {
+  margin: 0; color: var(--ink); background: var(--bg);
+  font: 15px/1.45 var(--sans); -webkit-font-smoothing: antialiased;
+}
+button, input { font: inherit; }
+
+/* Header */
+.top {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  max-width: 1200px; margin: 0 auto; padding: 18px 20px 12px;
+}
+h1 { margin: 0; font: 600 18px var(--sans); color: var(--ink-strong); letter-spacing: .01em; }
+.state { font: 500 13px var(--mono); color: var(--label); }
+.state.on { color: var(--ink); }
+.state.off { color: var(--accent-hi); }
+.stamp { font: 12px var(--mono); color: var(--label); }
+
+/* Stop: always in view, the largest thing on the page */
+.stopbar {
+  position: sticky; top: 0; z-index: 5; background: var(--bg);
+  border-bottom: 1px solid var(--line); padding: 12px 20px;
+}
+.stopbar .inner { max-width: 1200px; margin: 0 auto; }
+.stop {
+  display: block; width: 100%; min-height: 72px; border: 0; border-radius: 4px;
+  background: var(--stop); color: #fff; font: 700 22px var(--sans); letter-spacing: .02em;
+  cursor: pointer; touch-action: manipulation;
+}
+.stop:active { background: #a31609; }
+.stopbar small { display: block; margin-top: 6px; color: var(--label); font-size: 13px; text-align: center; }
+
+/* Layout: readout beside controls on wide screens, stacked on phones */
+.layout {
+  display: grid; gap: 28px; max-width: 1200px; margin: 0 auto; padding: 24px 20px 48px;
+}
+@media (min-width: 900px) {
+  .layout { grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); align-items: start; }
+  .readout { position: sticky; top: 120px; }
+}
+
+/* Readout */
+.coords { margin: 0; display: grid; gap: 18px; }
+.coords div { min-width: 0; }
+dt { color: var(--label); font-size: 13px; }
+.coords dd {
+  margin: 4px 0 0; font: 500 clamp(30px, 7vw, 44px)/1 var(--mono);
+  color: var(--ink-strong); font-variant-numeric: tabular-nums; letter-spacing: -.01em;
+}
+.facts {
+  margin: 24px 0 0; padding-top: 18px; border-top: 1px solid var(--line);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px;
+}
+.facts dd { margin: 3px 0 0; color: var(--ink-strong); font-variant-numeric: tabular-nums; }
+.facts .mono { font: 13px var(--mono); }
+.note {
+  margin: 22px 0 0; padding-left: 12px; border-left: 2px solid var(--accent);
+  color: var(--label); font-size: 13px;
+}
+
+/* Sections: hairlines, not boxes */
+.block { padding: 20px 0; border-top: 1px solid var(--line); }
+.block:first-child { border-top: 0; padding-top: 0; }
+.block h2, .block summary {
+  margin: 0 0 14px; font: 600 14px var(--sans); color: var(--label); cursor: pointer;
+}
+.block h2 { cursor: default; }
+summary { list-style: none; display: flex; justify-content: space-between; align-items: center; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; color: var(--accent-hi); font: 400 22px/1 var(--sans); }
+details[open] > summary::after { content: "–"; }
+details[open] > summary { margin-bottom: 14px; }
+.hint { margin: 12px 0 0; color: var(--label); font-size: 13px; }
+
+/* Buttons: outlined by default, filled only when active or dangerous */
+button {
+  min-height: 48px; padding: 0 16px; border: 1px solid var(--line); border-radius: 4px;
+  background: var(--raised); color: var(--ink); cursor: pointer;
+  touch-action: manipulation; -webkit-user-select: none; user-select: none;
+}
+button:hover:not(:disabled) { border-color: var(--accent); }
+button:active:not(:disabled) { background: var(--pressed); }
+button:disabled { opacity: .28; cursor: default; }
+button.current { background: var(--accent); border-color: var(--accent-hi); color: #fff; }
 button.hold { touch-action: none; }
-.row { display: flex; flex-wrap: wrap; gap: 8px; }
-.dpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 240px; margin: 4px auto 0; }
-.dpad button { min-height: 64px; font-size: 18px; font-weight: 700; }
-.kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-variant-numeric: tabular-nums; }
-.kv span:nth-child(odd) { color: var(--dim); }
-input[type=text], input[type=number] { min-height: 44px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line); background: #0b0b0b; color: var(--txt); font: inherit; width: 100%; }
-.field { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; margin: 6px 0; }
-.field label { color: var(--dim); font-size: 13px; }
-table { width: 100%; border-collapse: collapse; }
-td { padding: 6px 4px; border-top: 1px solid #222; vertical-align: middle; }
-td:first-child { color: var(--dim); font-size: 13px; width: 38%; }
-ul#log { list-style: none; margin: 0; padding: 0; max-height: 260px; overflow: auto; font: 13px/1.5 ui-monospace, Menlo, monospace; color: var(--dim); }
-ul#log li.bad { color: var(--bad); }
-details summary { cursor: pointer; color: var(--red-hi); font-weight: 600; margin-bottom: 8px; }
-.check { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
-.check input { width: 20px; height: 20px; }
+:focus-visible { outline: 2px solid var(--accent-hi); outline-offset: 2px; }
+
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.seg { display: inline-flex; flex-wrap: wrap; }
+.seg button { border-radius: 0; margin-left: -1px; min-width: 52px; font: 500 14px var(--mono); }
+.seg button:first-child { border-radius: 4px 0 0 4px; margin-left: 0; }
+.seg button:last-child { border-radius: 0 4px 4px 0; }
+.seg + .seg { margin-top: 10px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* D-pad */
+.pad {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
+  max-width: 270px; margin: 0 auto;
+}
+.pad button { min-height: 76px; font: 600 20px var(--sans); }
+.pad-center {
+  display: grid; place-items: center;
+}
+.pad-center::before {
+  content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--accent);
+}
+
+/* Settings rows and fields */
+.srow {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 12px 0; border-top: 1px solid var(--line-soft);
+}
+.srow:first-of-type { border-top: 0; }
+.srow > span:first-child { color: var(--label); font-size: 14px; }
+.srow em { font: 13px var(--mono); color: var(--ink-strong); font-style: normal; }
+.field {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 12px 0; border-top: 1px solid var(--line-soft);
+}
+.field:first-of-type { border-top: 0; }
+.field > span:first-child { color: var(--label); font-size: 14px; }
+.field em { font: 13px var(--mono); color: var(--ink-strong); font-style: normal; }
+.field .row { flex-wrap: nowrap; }
+input[type=text], input[type=number] {
+  min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 4px;
+  background: #050101; color: var(--ink-strong); font: 15px var(--mono); width: 150px;
+}
+input:focus-visible { outline: 2px solid var(--accent-hi); outline-offset: 2px; }
+.narrow { width: 104px !important; }
+.goto-check { display: flex; gap: 10px; align-items: center; margin: 16px 0 12px; color: var(--ink); }
+.goto-check input { width: 22px; height: 22px; accent-color: var(--accent); }
+
+/* Log */
+#log {
+  list-style: none; margin: 0; padding: 0; max-height: 240px; overflow: auto;
+  font: 12.5px/1.6 var(--mono); color: var(--label);
+}
+#log li.bad { color: var(--accent-hi); }
+
+@media (max-width: 480px) {
+  .pad { max-width: 240px; }
+}
 </style>
 </head>
 <body>
-<header>
+
+<header class="top">
   <h1>UMi 17 Lite</h1>
-  <div class="row"><span id="conn" class="pill">connecting</span><span id="updated" class="dim"></span></div>
+  <div class="row">
+    <span id="conn" class="state">connecting</span>
+    <span id="updated" class="stamp"></span>
+  </div>
 </header>
 
-<main>
-  <div class="card wide">
-    <button id="stop" class="stop">EMERGENCY STOP</button>
-    <p class="dim" style="margin:8px 0 0">Stops motion (dr=qq and LX200 :Q#). Space bar does the same on a laptop.</p>
+<div class="stopbar">
+  <div class="inner">
+    <button id="stop" class="stop">Stop</button>
+    <small>Halts all motion. The space bar does the same.</small>
   </div>
+</div>
 
-  <div class="card wide">
-    <div class="warnbar">The pointing model was reset on 2026-10-23 and has not been re-aligned. Check the telescope by hand before using Goto or Sync.</div>
-  </div>
+<main class="layout">
 
-  <section class="card">
-    <h2>Status</h2>
-    <div class="kv">
-      <span>RA (now)</span><span id="ra">—</span>
-      <span>Dec (now)</span><span id="dec">—</span>
-      <span>Altitude</span><span id="alt">—</span>
-      <span>Sidereal time</span><span id="lst">—</span>
-      <span>Pier side</span><span id="pier">—</span>
-      <span>Parking</span><span id="park">—</span>
-      <span>Home</span><span id="home">—</span>
-      <span>Motion</span><span id="slew">—</span>
-      <span>Tracking</span><span id="track">—</span>
-      <span>Status letters</span><span id="gu">—</span>
-      <span>Target RA</span><span id="t_now_ra">—</span>
-      <span>Target Dec</span><span id="t_now_dec">—</span>
-      <span>Latitude</span><span id="lat">—</span>
-      <span>Longitude</span><span id="lon">—</span>
-      <span>UTC offset</span><span id="utc">—</span>
-    </div>
+  <section class="readout" aria-label="Telescope position">
+    <dl class="coords">
+      <div><dt>Right ascension</dt><dd id="ra">—</dd></div>
+      <div><dt>Declination</dt><dd id="dec">—</dd></div>
+    </dl>
+    <dl class="facts">
+      <div><dt>Altitude</dt><dd id="alt">—</dd></div>
+      <div><dt>Sidereal time</dt><dd id="lst">—</dd></div>
+      <div><dt>Pier side</dt><dd id="pier">—</dd></div>
+      <div><dt>Parking</dt><dd id="park">—</dd></div>
+      <div><dt>Home</dt><dd id="home">—</dd></div>
+      <div><dt>Motion</dt><dd id="slew">—</dd></div>
+      <div><dt>Tracking</dt><dd id="track">—</dd></div>
+      <div><dt>Status letters</dt><dd id="gu" class="mono">—</dd></div>
+      <div><dt>Target RA</dt><dd id="t_now_ra">—</dd></div>
+      <div><dt>Target Dec</dt><dd id="t_now_dec">—</dd></div>
+      <div><dt>Latitude</dt><dd id="lat">—</dd></div>
+      <div><dt>Longitude</dt><dd id="lon">—</dd></div>
+      <div><dt>UTC offset</dt><dd id="utc">—</dd></div>
+    </dl>
+    <p class="note">The pointing hasn't been re-aligned since the 2026-10-23 sync. Check the tube by hand before you use Goto or Sync.</p>
   </section>
 
-  <section class="card">
-    <h2>Motion</h2>
-    <div class="dpad">
-      <span></span><button class="hold" data-hold="n">N</button><span></span>
-      <button class="hold" data-hold="w">W</button><button id="center" disabled>●</button><button class="hold" data-hold="e">E</button>
-      <span></span><button class="hold" data-hold="s">S</button><span></span>
-    </div>
-    <p class="dim">Hold a direction. Arrow keys work too.</p>
-    <h3>Speed</h3>
-    <div class="row">
-      <button data-file="controlA.txt" data-key="dr" data-value="R0">R0</button>
-      <button data-file="controlA.txt" data-key="dr" data-value="R1">R1</button>
-      <button data-file="controlA.txt" data-key="dr" data-value="R2">R2</button>
-      <button data-file="controlA.txt" data-key="dr" data-value="R5">R5</button>
-      <button data-file="controlA.txt" data-key="dr" data-value="R6">R6</button>
-      <button data-file="controlA.txt" data-key="dr" data-value="R7">R7</button>
-      <button data-file="controlA.txt" data-key="dr" data-value="R8">R8</button>
-    </div>
-    <h3>Tracking</h3>
-    <div class="row">
-      <button data-ctl="trk_on" data-file="controlA.txt" data-key="dr" data-value="T1">Track on</button>
-      <button data-ctl="trk_off" data-file="controlA.txt" data-key="dr" data-value="T0">Track off</button>
-      <button data-file="controlA.txt" data-key="dr" data-value="Ts">Sidereal</button>
-      <button data-file="controlA.txt" data-key="dr" data-value="Tl">Lunar</button>
-      <button data-file="controlA.txt" data-key="dr" data-value="Th">Solar</button>
-    </div>
-    <h3>Park and home</h3>
-    <div class="row">
-      <button data-ctl="park" data-file="controlA.txt" data-key="dr" data-value="pk" data-confirm="Park the telescope?">Park</button>
-      <button data-ctl="unpark" data-file="controlA.txt" data-key="dr" data-value="pu">Unpark</button>
-      <button data-file="controlA.txt" data-key="dr" data-value="qh" data-confirm="Find home? The telescope will move to the home sensor.">Find home</button>
-      <button data-ctl="c_goto" data-file="controlA.txt" data-key="dr" data-value="qc">Continue goto</button>
-      <button data-file="controlA.txt" data-key="dr" data-value="qr" data-confirm="Set the current position as home?">Set home here (qr)</button>
-    </div>
-  </section>
+  <div class="controls">
 
-  <section class="card">
-    <h2>Target and goto</h2>
-    <div class="field"><label for="t_ra">Target RA (HH:MM:SS)</label><input id="t_ra" type="text" value="00:00:00" inputmode="numeric"></div>
-    <div class="field"><label for="t_dec">Target Dec (+DD:MM:SS)</label><input id="t_dec" type="text" value="+00:00:00" inputmode="numeric"></div>
-    <div class="row">
-      <button id="set_target">Set target</button>
-      <button id="sync" data-danger="1">Sync to target</button>
-    </div>
-    <div class="check"><input id="goto_ok" type="checkbox"><label for="goto_ok">Goto enabled (check the sky and the cable first)</label></div>
-    <div class="row">
-      <button id="goto">Goto target</button>
-      <button id="home_lx">Go home (hC)</button>
-      <button id="set_home_lx">Set home here (hF)</button>
-    </div>
-    <p class="dim">Sync writes the target into the pointing model. It doesn't use where the tube points.</p>
-  </section>
+    <section class="block">
+      <h2>Move</h2>
+      <div class="pad">
+        <span></span><button class="hold" data-hold="n" aria-label="North">N</button><span></span>
+        <button class="hold" data-hold="w" aria-label="West">W</button><span id="center" class="pad-center" aria-hidden="true"></span><button class="hold" data-hold="e" aria-label="East">E</button>
+        <span></span><button class="hold" data-hold="s" aria-label="South">S</button><span></span>
+      </div>
+      <p class="hint">Hold a direction to move. Arrow keys work too.</p>
+    </section>
 
-  <section class="card">
-    <h2>Alignment (unidentified)</h2>
-    <div class="row">
-      <button data-ctl="alg1" data-file="controlA.txt" data-key="al" data-value="1">Align 1★</button>
-      <button data-ctl="alg2" data-file="controlA.txt" data-key="al" data-value="3">Align 3★</button>
-      <button data-ctl="alg3" data-file="controlA.txt" data-key="al" data-value="9">Align 9★</button>
-      <button data-ctl="alga" data-file="controlA.txt" data-key="al" data-value="n">Align accept</button>
-    </div>
-    <h3>Reset (rp=a)</h3>
-    <div class="row">
-      <button data-ctl="rpa" data-file="controlA.txt" data-key="rp" data-value="a" data-confirm="rp=a is not identified. It may reset the alignment model. Continue?">rp=a</button>
-    </div>
-  </section>
+    <section class="block">
+      <h2>Speed</h2>
+      <div class="seg">
+        <button data-file="controlA.txt" data-key="dr" data-value="R0">R0</button>
+        <button data-file="controlA.txt" data-key="dr" data-value="R1">R1</button>
+        <button data-file="controlA.txt" data-key="dr" data-value="R2">R2</button>
+        <button data-file="controlA.txt" data-key="dr" data-value="R5">R5</button>
+        <button data-file="controlA.txt" data-key="dr" data-value="R6">R6</button>
+        <button data-file="controlA.txt" data-key="dr" data-value="R7">R7</button>
+        <button data-file="controlA.txt" data-key="dr" data-value="R8">R8</button>
+      </div>
+    </section>
 
-  <section class="card wide">
-    <details>
-      <summary>Settings (settingsA.txt)</summary>
-      <table>
-        <tr><td>Max slew speed (ss)</td><td class="row">
+    <section class="block">
+      <h2>Tracking</h2>
+      <div class="seg">
+        <button data-ctl="trk_on" data-file="controlA.txt" data-key="dr" data-value="T1">On</button>
+        <button data-ctl="trk_off" data-file="controlA.txt" data-key="dr" data-value="T0">Off</button>
+      </div>
+      <div class="seg">
+        <button data-file="controlA.txt" data-key="dr" data-value="Ts">Sidereal</button>
+        <button data-file="controlA.txt" data-key="dr" data-value="Tl">Lunar</button>
+        <button data-file="controlA.txt" data-key="dr" data-value="Th">Solar</button>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>Park and home</h2>
+      <div class="grid2">
+        <button data-ctl="park" data-file="controlA.txt" data-key="dr" data-value="pk" data-confirm="Park the telescope?">Park</button>
+        <button data-ctl="unpark" data-file="controlA.txt" data-key="dr" data-value="pu">Unpark</button>
+        <button data-file="controlA.txt" data-key="dr" data-value="qh" data-confirm="Find home? The telescope will move to the home sensor.">Find home</button>
+        <button data-ctl="c_goto" data-file="controlA.txt" data-key="dr" data-value="qc">Continue goto</button>
+        <button data-file="controlA.txt" data-key="dr" data-value="qr" data-confirm="Set the current position as home?">Set home here</button>
+      </div>
+    </section>
+
+    <details class="block">
+      <summary>Target and goto</summary>
+      <div class="field"><span>Target RA</span><input id="t_ra" type="text" value="00:00:00" inputmode="numeric" aria-label="Target RA, HH:MM:SS"></div>
+      <div class="field"><span>Target Dec</span><input id="t_dec" type="text" value="+00:00:00" inputmode="numeric" aria-label="Target Dec, +DD:MM:SS"></div>
+      <div class="row" style="margin-top:12px">
+        <button id="set_target">Set target</button>
+        <button id="sync">Sync to target</button>
+      </div>
+      <label class="goto-check"><input id="goto_ok" type="checkbox"> Goto enabled. Check the sky and the cable first.</label>
+      <div class="row">
+        <button id="goto">Goto target</button>
+        <button id="home_lx">Go home</button>
+        <button id="set_home_lx">Set home here</button>
+      </div>
+      <p class="hint">Sync writes the target into the pointing model. It does not use where the tube points.</p>
+    </details>
+
+    <details class="block">
+      <summary>Alignment</summary>
+      <div class="seg">
+        <button data-ctl="alg1" data-file="controlA.txt" data-key="al" data-value="1">1 star</button>
+        <button data-ctl="alg2" data-file="controlA.txt" data-key="al" data-value="3">3 stars</button>
+        <button data-ctl="alg3" data-file="controlA.txt" data-key="al" data-value="9">9 stars</button>
+        <button data-ctl="alga" data-file="controlA.txt" data-key="al" data-value="n">Accept</button>
+      </div>
+      <div class="srow" style="margin-top:14px">
+        <span>Reset (rp=a, not identified)</span>
+        <button data-ctl="rpa" data-file="controlA.txt" data-key="rp" data-value="a" data-confirm="rp=a is not identified. It may reset the alignment model. Continue?">Reset</button>
+      </div>
+    </details>
+
+    <details class="block">
+      <summary>Settings</summary>
+      <div class="srow">
+        <span>Max slew speed</span>
+        <span class="seg">
           <button data-state-key="sr_f" data-state-value="disabled" data-file="settingsA.txt" data-key="ss" data-value="f">f</button>
           <button data-state-key="sr_n" data-state-value="disabled" data-file="settingsA.txt" data-key="ss" data-value="n">n</button>
           <button data-state-key="sr_s" data-state-value="disabled" data-file="settingsA.txt" data-key="ss" data-value="s">s</button>
           <button data-state-key="sr_vf" data-state-value="disabled" data-file="settingsA.txt" data-key="ss" data-value="vf">vf</button>
           <button data-state-key="sr_vs" data-state-value="disabled" data-file="settingsA.txt" data-key="ss" data-value="vs">vs</button>
-        </td></tr>
-        <tr><td>Backlash/buzzer line (ab)</td><td class="row">
-          <button data-state-key="bzr_on" data-state-value="disabled" data-file="settingsA.txt" data-key="ab" data-value="on">on</button>
-          <button data-state-key="bzr_off" data-state-value="disabled" data-file="settingsA.txt" data-key="ab" data-value="off">off</button>
-        </td></tr>
-        <tr><td>ma (no telemetry line seen)</td><td class="row">
+        </span>
+      </div>
+      <div class="srow">
+        <span>Buzzer</span>
+        <span class="seg">
+          <button data-state-key="bzr_on" data-state-value="disabled" data-file="settingsA.txt" data-key="ab" data-value="on">On</button>
+          <button data-state-key="bzr_off" data-state-value="disabled" data-file="settingsA.txt" data-key="ab" data-value="off">Off</button>
+        </span>
+      </div>
+      <div class="srow">
+        <span>ma, no status line seen</span>
+        <span class="seg">
           <button data-file="settingsA.txt" data-key="ma" data-value="on">on</button>
           <button data-file="settingsA.txt" data-key="ma" data-value="off">off</button>
-        </td></tr>
-        <tr><td>mp (no telemetry line seen)</td><td class="row">
+        </span>
+      </div>
+      <div class="srow">
+        <span>mp, no status line seen</span>
+        <span class="seg">
           <button data-file="settingsA.txt" data-key="mp" data-value="on">on</button>
           <button data-file="settingsA.txt" data-key="mp" data-value="off">off</button>
-        </td></tr>
-        <tr><td>rr (no telemetry line seen)</td><td class="row">
+        </span>
+      </div>
+      <div class="srow">
+        <span>rr, no status line seen</span>
+        <span class="seg">
           <button data-file="settingsA.txt" data-key="rr" data-value="on">on</button>
           <button data-file="settingsA.txt" data-key="rr" data-value="off">off</button>
           <button data-file="settingsA.txt" data-key="rr" data-value="don">don</button>
           <button data-file="settingsA.txt" data-key="rr" data-value="doff">doff</button>
           <button data-file="settingsA.txt" data-key="rr" data-value="otk">otk</button>
-        </td></tr>
-        <tr><td>pk (no telemetry line seen)</td><td class="row">
-          <button data-file="settingsA.txt" data-key="pk" data-value="s">s</button>
-        </td></tr>
-        <tr><td>tk (no telemetry line seen)</td><td class="row">
+        </span>
+      </div>
+      <div class="srow">
+        <span>pk, no status line seen</span>
+        <span class="seg"><button data-file="settingsA.txt" data-key="pk" data-value="s">s</button></span>
+      </div>
+      <div class="srow">
+        <span>tk, no status line seen</span>
+        <span class="seg">
           <button data-file="settingsA.txt" data-key="tk" data-value="-">-</button>
           <button data-file="settingsA.txt" data-key="tk" data-value="f">f</button>
           <button data-file="settingsA.txt" data-key="tk" data-value="r">r</button>
-        </td></tr>
-      </table>
+        </span>
+      </div>
     </details>
-  </section>
 
-  <section class="card">
-    <details>
-      <summary>Auxiliary (auxiliaryA.txt)</summary>
-      <table>
-        <tr><td>Switch 4 (x4v1)</td><td class="row">
-          <button data-state-src="auxiliary" data-state-key="sw4_on" data-state-value="disabled" data-file="auxiliaryA.txt" data-key="x4v1" data-value="1" data-confirm="Turn switch 4 on?">on</button>
-          <button data-state-src="auxiliary" data-state-key="sw4_off" data-state-value="disabled" data-file="auxiliaryA.txt" data-key="x4v1" data-value="0">off</button>
-        </td></tr>
-        <tr><td>x1v4 (now <span data-show="auxiliary:x1v4">—</span>)</td><td class="row">
+    <details class="block">
+      <summary>Auxiliary</summary>
+      <div class="srow">
+        <span>Switch 4</span>
+        <span class="seg">
+          <button data-state-src="auxiliary" data-state-key="sw4_on" data-state-value="disabled" data-file="auxiliaryA.txt" data-key="x4v1" data-value="1" data-confirm="Turn switch 4 on?">On</button>
+          <button data-state-src="auxiliary" data-state-key="sw4_off" data-state-value="disabled" data-file="auxiliaryA.txt" data-key="x4v1" data-value="0">Off</button>
+        </span>
+      </div>
+      <div class="srow">
+        <span>x1v4 <em data-show="auxiliary:x1v4">—</em></span>
+        <span class="seg">
           <button data-file="auxiliaryA.txt" data-key="x1v4" data-value="0">0</button>
           <button data-file="auxiliaryA.txt" data-key="x1v4" data-value="1">1</button>
-        </td></tr>
-        <tr><td>x1v1 (now <span data-show="auxiliary:x1v1">—</span>, no visible effect)</td><td class="row">
+        </span>
+      </div>
+      <div class="srow">
+        <span>x1v1 <em data-show="auxiliary:x1v1">—</em>, no visible effect</span>
+        <span class="seg">
           <button data-file="auxiliaryA.txt" data-key="x1v1" data-value="0">0</button>
           <button data-file="auxiliaryA.txt" data-key="x1v1" data-value="1">1</button>
-        </td></tr>
-      </table>
-      <div class="field"><label>x1v2 (now <span data-show="auxiliary:x1v2">—</span>)</label><span class="row"><input type="number" step="0.001" min="0" max="1" data-aux-input="x1v2" style="width:120px"><button data-aux-set="x1v2">Set</button></span></div>
-      <div class="field"><label>x1v3 (now <span data-show="auxiliary:x1v3">—</span>)</label><span class="row"><input type="number" step="0.001" min="0" max="1" data-aux-input="x1v3" style="width:120px"><button data-aux-set="x1v3">Set</button></span></div>
+        </span>
+      </div>
+      <div class="field">
+        <span>x1v2 <em data-show="auxiliary:x1v2">—</em></span>
+        <span class="row"><input class="narrow" type="number" step="0.001" min="0" max="1" data-aux-input="x1v2" aria-label="x1v2 value"><button data-aux-set="x1v2">Set</button></span>
+      </div>
+      <div class="field">
+        <span>x1v3 <em data-show="auxiliary:x1v3">—</em></span>
+        <span class="row"><input class="narrow" type="number" step="0.001" min="0" max="1" data-aux-input="x1v3" aria-label="x1v3 value"><button data-aux-set="x1v3">Set</button></span>
+      </div>
     </details>
-  </section>
 
-  <section class="card">
-    <details>
-      <summary>Configuration (configurationA.txt)</summary>
-      <div class="field"><label>b1 backlash axis 1 (now <span data-cfg-show="b1">—</span>)</label><span class="row"><input type="number" min="0" max="3600" data-cfg-input="b1" style="width:110px"><button data-cfg-set="b1">Set</button></span></div>
-      <div class="field"><label>b2 backlash axis 2 (now <span data-cfg-show="b2">—</span>)</label><span class="row"><input type="number" min="0" max="3600" data-cfg-input="b2" style="width:110px"><button data-cfg-set="b2">Set</button></span></div>
-      <div class="field"><label>el meridian east (now <span data-cfg-show="el">—</span>)</label><span class="row"><input type="number" min="-270" max="270" data-cfg-input="el" style="width:110px"><button data-cfg-set="el">Set</button></span></div>
-      <div class="field"><label>wl meridian west (now <span data-cfg-show="wl">—</span>)</label><span class="row"><input type="number" min="-270" max="270" data-cfg-input="wl" style="width:110px"><button data-cfg-set="wl">Set</button></span></div>
-      <div class="field"><label>hl horizon limit (now <span data-cfg-show="hl">—</span>)</label><span class="row"><input type="number" min="-30" max="30" data-cfg-input="hl" style="width:110px"><button data-cfg-set="hl">Set</button></span></div>
-      <div class="field"><label>ol overhead limit (now <span data-cfg-show="ol">—</span>)</label><span class="row"><input type="number" min="60" max="90" data-cfg-input="ol" style="width:110px"><button data-cfg-set="ol">Set</button></span></div>
-      <p class="dim">Site (read only): longitude <span data-cfg-show="g1">—</span>° <span data-cfg-show="g2">—</span>′ <span data-cfg-show="g3">—</span>″ (W is +), latitude <span data-cfg-show="t1">—</span>° <span data-cfg-show="t2">—</span>′, UTC offset <span data-cfg-show="u1">—</span>.</p>
+    <details class="block">
+      <summary>Configuration</summary>
+      <div class="field"><span>Backlash, axis 1 <em data-cfg-show="b1">—</em></span><span class="row"><input class="narrow" type="number" min="0" max="3600" data-cfg-input="b1" aria-label="Backlash axis 1"><button data-cfg-set="b1">Set</button></span></div>
+      <div class="field"><span>Backlash, axis 2 <em data-cfg-show="b2">—</em></span><span class="row"><input class="narrow" type="number" min="0" max="3600" data-cfg-input="b2" aria-label="Backlash axis 2"><button data-cfg-set="b2">Set</button></span></div>
+      <div class="field"><span>Meridian limit, east <em data-cfg-show="el">—</em></span><span class="row"><input class="narrow" type="number" min="-270" max="270" data-cfg-input="el" aria-label="Meridian limit east"><button data-cfg-set="el">Set</button></span></div>
+      <div class="field"><span>Meridian limit, west <em data-cfg-show="wl">—</em></span><span class="row"><input class="narrow" type="number" min="-270" max="270" data-cfg-input="wl" aria-label="Meridian limit west"><button data-cfg-set="wl">Set</button></span></div>
+      <div class="field"><span>Horizon limit <em data-cfg-show="hl">—</em></span><span class="row"><input class="narrow" type="number" min="-30" max="30" data-cfg-input="hl" aria-label="Horizon limit"><button data-cfg-set="hl">Set</button></span></div>
+      <div class="field"><span>Overhead limit <em data-cfg-show="ol">—</em></span><span class="row"><input class="narrow" type="number" min="60" max="90" data-cfg-input="ol" aria-label="Overhead limit"><button data-cfg-set="ol">Set</button></span></div>
+      <p class="hint">Site, read only: longitude <em data-cfg-show="g1">—</em>° <em data-cfg-show="g2">—</em>′ <em data-cfg-show="g3">—</em>″ (W is +), latitude <em data-cfg-show="t1">—</em>° <em data-cfg-show="t2">—</em>′, UTC offset <em data-cfg-show="u1">—</em>.</p>
     </details>
-  </section>
 
-  <section class="card">
-    <h2>Clock</h2>
-    <p class="dim">Sets the mount clock to this computer's time.</p>
-    <button id="clock">Set mount clock</button>
-  </section>
+    <section class="block">
+      <h2>Clock</h2>
+      <div class="row">
+        <button id="clock">Set mount clock to this computer</button>
+      </div>
+    </section>
 
-  <section class="card wide">
-    <h2>Log</h2>
-    <ul id="log"></ul>
-  </section>
+    <section class="block">
+      <h2>Log</h2>
+      <ul id="log"></ul>
+    </section>
+
+  </div>
 </main>
 
 <script>
@@ -367,7 +533,7 @@ $('clock').addEventListener('click', async () => {
 function render(s) {
   const conn = $('conn');
   conn.textContent = s.online ? 'online' : 'offline';
-  conn.className = 'pill ' + (s.online ? 'ok' : 'bad');
+  conn.className = 'state ' + (s.online ? 'on' : 'off');
   setText('updated', 'updated ' + s.time);
 
   setText('ra', s.position.ra);
@@ -423,7 +589,7 @@ async function refresh() {
     render(await api('/api/status'));
   } catch (err) {
     $('conn').textContent = 'offline';
-    $('conn').className = 'pill bad';
+    $('conn').className = 'state off';
   } finally {
     statusBusy = false;
   }
@@ -433,7 +599,7 @@ loadConfig();
 refresh();
 setInterval(refresh, 2000);
 setInterval(loadConfig, 15000);
-logLine('UI ready. Telescope commands go straight to the mount.');
+logLine('Ready. Telescope commands go straight to the mount.');
 </script>
 </body>
 </html>

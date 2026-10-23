@@ -130,7 +130,7 @@ def main():
         check("server starts", wait_port(UI_PORT), server.stdout.read1(500) if server.poll() else "")
 
         status, page = ui_request("GET", "/")
-        check("GET / serves the page", status == 200 and b"EMERGENCY STOP" in page, status)
+        check("GET / serves the page", status == 200 and b'id="stop"' in page, status)
 
         status, data = ui_request("GET", "/api/status")
         s = json.loads(data)
