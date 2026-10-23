@@ -1,0 +1,112 @@
+Looking for the mount...
+Mount:   192.168.0.1
+Output:  /Users/zhunhao/Documents/Projects/mount-web-ui/probe_output/20261023-192831
+Started: Fri Oct 23 19:28:51 +08 2026
+
+== HTTP: documented pages and telemetry ==
+GET / -> 200 4604B 0.200015s
+GET /index.htm -> 200 4604B 0.273591s
+GET /control.htm -> 200 9650B 0.182291s
+GET /auxiliary.htm -> 200 6744B 0.128277s
+GET /settings.htm -> 200 6482B 0.133336s
+GET /configuration.htm -> 200 5854B 0.140096s
+GET /wifi.htm -> 200 3239B 0.119744s
+GET /control.txt -> 200 143B 0.015933s
+
+== HTTP: guessed names (404 is fine, it shows what exists) ==
+GET /index.txt -> 404 57B 0.107112s
+GET /status.txt -> 404 58B 0.013844s
+GET /settings.txt -> 200 241B 1.031111s
+GET /configuration.txt -> 404 65B 0.012293s
+GET /auxiliary.txt -> 200 67B 0.021143s
+GET /wifi.txt -> 404 56B 0.010700s
+GET /favicon.ico -> 404 59B 0.015402s
+
+== TCP ports ==
+TCP 80 open
+TCP 2000 closed or filtered
+TCP 9998 open
+TCP 9999 open
+
+== LX200 read commands on TCP 9999 ==
+:GVP# -> On-Step#
+:GVN# -> 4.21e#
+:GVD# -> Nov  2 2023#
+:GVT# -> 20:46:24#
+:GU# -> nNpHz/Eo260#
+:GC# -> 10/23/26#
+:Ga# -> 07:28:53#
+:GL# -> 19:28:53#
+:GS# -> 20:31:09#
+:GG# -> -08#
+:Gt# -> +01*20#
+:Gg# -> -103*40#
+:Gm# -> N#
+:GT# -> 0.00000#
+:Gh# -> +0*#
+:Go# -> 90*#
+:GM# -> None#
+:GN# -> None#
+:GO# -> None#
+:GP# -> None#
+:GR# -> 14:31:09#
+:GD# -> +90*00:00#
+:GA# -> +01*20:00#
+:Gr# -> 00:00:00#
+:Gd# -> +00*00:00#
+:FA# -> 0
+:Fa# -> 0
+:FT# -> 0
+:FG# -> 0
+:FM# -> 0
+:Fe# -> 0
+:Ft# -> 0
+:Fu# -> 0
+:FB# -> 0
+:FC# -> 0
+:Fc# -> 0
+:FD# -> 0
+:FP# -> 0
+
+== LX200 read commands on TCP 9998 ==
+:GVP# -> On-Step#
+:GVN# -> 4.21e#
+:GVD# -> Nov  2 2023#
+:GVT# -> 20:46:24#
+:GU# -> nNpHz/Eo260#
+:GC# -> 10/23/26#
+:Ga# -> 07:29:14#
+:GL# -> 19:29:14#
+:GS# -> 20:31:30#
+:GG# -> -08#
+:Gt# -> +01*20#
+:Gg# -> -103*40#
+:Gm# -> N#
+:GT# -> 0.00000#
+:Gh# -> +0*#
+:Go# -> 90*#
+:GM# -> None#
+:GN# -> None#
+:GO# -> None#
+:GP# -> None#
+:GR# -> 14:31:30#
+:GD# -> +90*00:00#
+:GA# -> +01*20:00#
+:Gr# -> 00:00:00#
+:Gd# -> +00*00:00#
+:FA# -> 0
+:Fa# -> 0
+:FT# -> 0
+:FG# -> 0
+:FM# -> 0
+:Fe# -> 0
+:Ft# -> 0
+:Fu# -> 0
+:FB# -> 0
+:FC# -> 0
+:Fc# -> 0
+:FD# -> 0
+:FP# -> 0
+
+Done: Fri Oct 23 19:29:37 +08 2026
+Saved files are in /Users/zhunhao/Documents/Projects/mount-web-ui/probe_output/20261023-192831

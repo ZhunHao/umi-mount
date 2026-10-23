@@ -1,0 +1,6 @@
+x1v1|-
+x1v2|0.016
+x1v3|0.02
+x1v4|0
+sw4_on|enabled
+sw4_off|disabled

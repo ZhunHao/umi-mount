@@ -1,0 +1,30 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset='utf-8'/>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<STYLE>.clear { clear: both; } .a { background-color: #111111; } .t { padding: 10px 10px 20px 10px; width: 600px; border: 5px solid #551111; margin: 25px 25px 0px 25px;color: #999999; background-color: #111111; min-width: 30em; } input { text-align:center; padding: 2px; margin: 3px; font-weight: bold; width:5em; background-color: #B02020}.b { padding: 10px; border-left: 5px solid #551111; border-right: 5px solid #551111; border-bottom: 5px solid #551111; margin: 0px 25px 25px 25px; width: 600px; color: #999999;background-color: #111111; min-width: 30em; } select { width:4em; font-weight: bold; background-color: #B02020; padding: 2px 2px; } .c { color: #B02020; font-weight: bold; }h1 { text-align: right; } a:hover, a:active { background-color: red; } .y { color: #FFFF00; font-weight: bold; }a:link, a:visited { background-color: #332222; color: #A07070; border:1px solid red; padding: 5px 10px; margin: none; text-align: center; text-decoration: none; display: inline-block; }button:disabled { background-color: #733; color: #000; } button { background-color: #B02020; font-weight: bold; border-radius: 5px; margin: 2px; padding: 4px 8px; }</STYLE></head>
+<body bgcolor='#26262A'>
+<div class='t'><table width='100%%'><tr><td><b><font size='5'>MeowAstro</font></b><a href='#' onclick='changeLanguage(0)'>中文</a></td><td align='right'><b>WiFi Server 2.1v (OnStep 4.21e)</b></td></tr></table><a href='/index.htm'>Status</a><a href='/control.htm'>Control</a><a href='/auxiliary.htm'>Aux</a><a href='/settings.htm'>Settings</a><a href='/configuration.htm'>Config</a><a href='/wifi.htm' style='background-color: #552222;'>WiFi</a><br /></div><div class='b'>
+<div><script>
+function changeLanguage(v) {
+var message='';
+if(v==0){
+message='设置语言为中文?Change the language to Chinese?';
+}
+if(v==1){
+message='Change the language to English?语言设置成英文?';
+}
+if(confirm(message)){
+var xhttp = new XMLHttpRequest();
+var res = '/settingsA.txt?lang='+encodeURIComponent(v)+'&x='+new Date().getTime();
+xhttp.open('GET', res, true);
+xhttp.send();
+alert('重启设备后生效。Effective after restarting the device.');
+}
+}
+</script>
+<b>Performance and compatibility:</b><br/><form method='post' action='/wifi.htm'>Command channel serial read time-out: <input style='width:4em' name='ccto' value='60' type='number' min='5' max='100'> ms<br/>Web channel serial read time-out: <input style='width:4em' name='wcto' value='60' type='number' min='5' max='100'> ms<br/><button type='submit'>Upload</button></form><br />
+<br/><b>Station mode (connect to an Access-Point):</b><br/><form method='post' action='/wifi.htm'>SSID: <input style='width:6em' name='stssid' type='text' value='' maxlength='32'>&nbsp;&nbsp;&nbsp;Password: <input style='width:8em' name='stpwd' type='password' value='' minlength='8' maxlength='39'> (8 char min.)<br/>MAC: <input style='width:10em' name='apmac' type='text' value='42:91:51:5b:61:f2' maxlength='17' disabled><br/><table><tr><td>IP Address: </td><td><input name='apip1' value='192' type='number' min='0' max='255'>&nbsp;.&nbsp;<input name='apip2' value='168' type='number' min='0' max='255'>&nbsp;.&nbsp;<input name='apip3' value='0' type='number' min='0' max='255'>&nbsp;.&nbsp;<input name='apip4' value='1' type='number' min='0' max='255'></td><tr><td>Gateway: </td><td><input name='apgw1' value='192' type='number' min='0' max='255'>&nbsp;.&nbsp;<input name='apgw2' value='168' type='number' min='0' max='255'>&nbsp;.&nbsp;<input name='apgw3' value='0' type='number' min='0' max='255'>&nbsp;.&nbsp;<input name='apgw4' value='1' type='number' min='0' max='255'></td><tr><td>Subnet: </td><td><input name='apsn1' value='255' type='number' min='0' max='255'>&nbsp;.&nbsp;<input name='apsn2' value='255' type='number' min='0' max='255'>&nbsp;.&nbsp;<input name='apsn3' value='255' type='number' min='0' max='255'>&nbsp;.&nbsp;<input name='apsn4' value='0' type='number' min='0' max='255'></td></tr></table>Enable Access-Point Mode: <input type='checkbox' name='apen' value='1' checked> (Note: auto-enabled if Station Mode fails to connect)<br/><button type='submit'>Upload</button></form><br />
+<br/><b>WiFi Configuration Security:</b><br/><form method='post' action='/wifi.htm'>Password: <input style='width:8em' name='webpwd' type='password' minlength='3' maxlength='39'> <button type='submit'>Upload</button></form><form method='post' action='/wifi.htm'><button type='submit' name='logout' value='1'>Logout</button></form><br />
+</div></div></body></html>

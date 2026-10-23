@@ -1,0 +1,19 @@
+/index.htm -> 200 4549B | <!DOCTYPE HTML><html><head><meta charset='utf-8'/><meta name="viewport" content="width=device-width,initial-scale=1"><me
+/control.htm -> 200 9172B | <!DOCTYPE HTML><html><head><meta charset='utf-8'/><meta name="viewport" content="width=device-width,initial-scale=1"><ST
+/auxiliary.htm -> 200 6744B | <!DOCTYPE HTML><html><head><meta charset='utf-8'/><meta name="viewport" content="width=device-width,initial-scale=1"><ST
+/settings.htm -> 200 6004B | <!DOCTYPE HTML><html><head><meta charset='utf-8'/><meta name="viewport" content="width=device-width,initial-scale=1"><ST
+/configuration.htm -> 200 5854B | <!DOCTYPE HTML><html><head><meta charset='utf-8'/><meta name="viewport" content="width=device-width,initial-scale=1"><ST
+/wifi.htm -> 200 3239B | <!DOCTYPE HTML><html><head><meta charset='utf-8'/><meta name="viewport" content="width=device-width,initial-scale=1"><ST
+/control.txt -> 200 146B | trk_on|enabledtrk_off|disabledpark|enabledunpark|disabledc_goto|disabledalg1|disabledalg2|disabledalg3|disabledalga|disa
+/settings.txt -> 200 241B | bzr_on|disabledbzr_off|enabledmfa_on|enabledmfa_off|disabledmfp_on|enabledmfp_off|disabledot_on|enabledot_ref|enabledot_
+/auxiliary.txt -> 200 67B | x1v1|-x1v2|0.016x1v3|0.02x1v4|0sw4_on|enabledsw4_off|disabled
+/configuration.txt -> 404 65B | File Not FoundURI: /configuration.txtMethod: GETArguments: 0
+/controlA.txt -> 200 0B | 
+/settingsA.txt -> 200 0B | 
+/auxiliaryA.txt -> 200 0B | 
+/configurationA.txt -> 200 0B | 
+/wifiA.txt -> 404 57B | File Not FoundURI: /wifiA.txtMethod: GETArguments: 0
+/wifiA.htm -> 404 57B | File Not FoundURI: /wifiA.htmMethod: GETArguments: 0
+/status.txt -> 404 58B | File Not FoundURI: /status.txtMethod: GETArguments: 0
+/index.txt -> 404 57B | File Not FoundURI: /index.txtMethod: GETArguments: 0
+/favicon.ico -> 404 59B | File Not FoundURI: /favicon.icoMethod: GETArguments: 0

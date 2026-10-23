@@ -1,0 +1,2 @@
+# Mount login session cookies, written by the WiFi login probe
+probe_output/**/cookies.txt

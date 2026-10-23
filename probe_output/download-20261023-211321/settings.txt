@@ -1,0 +1,16 @@
+bzr_on|disabled
+bzr_off|enabled
+mfa_on|enabled
+mfa_off|disabled
+mfp_on|enabled
+mfp_off|disabled
+ot_on|enabled
+ot_ref|enabled
+ot_off|disabled
+ot_dul|disabled
+ot_sgl|disabled
+sr_vf|disabled
+sr_f|enabled
+sr_n|enabled
+sr_s|enabled
+sr_vs|enabled

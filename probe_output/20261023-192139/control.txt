@@ -1,0 +1,10 @@
+trk_on|enabled
+trk_off|disabled
+park|disabled
+unpark|enabled
+c_goto|disabled
+alg1|enabled
+alg2|enabled
+alg3|enabled
+alga|disabled
+rpa|disabled

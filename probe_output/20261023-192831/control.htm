@@ -1,0 +1,72 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset='utf-8'/>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<STYLE>.clear { clear: both; } .a { background-color: #111111; } .t { padding: 10px 10px 20px 10px; width: 600px; border: 5px solid #551111; margin: 25px 25px 0px 25px;color: #999999; background-color: #111111; min-width: 30em; } input { text-align:center; padding: 2px; margin: 3px; font-weight: bold; width:5em; background-color: #B02020}.b { padding: 10px; border-left: 5px solid #551111; border-right: 5px solid #551111; border-bottom: 5px solid #551111; margin: 0px 25px 25px 25px; width: 600px; color: #999999;background-color: #111111; min-width: 30em; } select { width:4em; font-weight: bold; background-color: #B02020; padding: 2px 2px; } .c { color: #B02020; font-weight: bold; }h1 { text-align: right; } a:hover, a:active { background-color: red; } .y { color: #FFFF00; font-weight: bold; }a:link, a:visited { background-color: #332222; color: #A07070; border:1px solid red; padding: 5px 10px; margin: none; text-align: center; text-decoration: none; display: inline-block; }button:disabled { background-color: #733; color: #000; } button { background-color: #B02020; font-weight: bold; border-radius: 5px; margin: 2px; padding: 4px 8px; }.b1 { float: left; border: 2px solid #551111; background-color: #181818; text-align: center; margin: 5px; padding: 15px; padding-top: 3px; }.gb {  font-weight: bold; font-size: 150%; font-family: 'Times New Roman', Times, serif; width: 60px; height: 50px; padding: 0px; }.bb {  font-weight: bold; font-size: 105%; } .bbh {  font-weight: bold; font-size: 100%; height: 2.1em; }.btns_left { margin-left: -1px; border-top-left-radius: 0px; border-bottom-left-radius: 0px; }.btns_mid { margin-left: -1px; margin-right: -1px; border-top-left-radius: 0px; border-bottom-left-radius: 0px; border-top-right-radius: 0px; border-bottom-right-radius: 0px; }.btns_right { margin-right: -1px; border-top-right-radius: 0px; border-bottom-right-radius: 0px; }.collapsible { background-color: #500808; color: #999; cursor: pointer; padding: 7px; width: 80%; border: none; text-align: left; outline: none; font-size: 14px; }.active, .collapsible:hover { background-color: #661111; } .content { padding: 0px 18px; display: none; overflow: hidden; background-color: #301212; }</STYLE></head>
+<body bgcolor='#26262A'>
+<div class='t'><table width='100%%'><tr><td><b><font size='5'>MeowAstro</font></b><a href='#' onclick='changeLanguage(0)'>中文</a></td><td align='right'><b>WiFi Server 2.1v (OnStep 4.21e)</b></td></tr></table><a href='/index.htm'>Status</a><a href='/control.htm' style='background-color: #552222;'>Control</a><a href='/auxiliary.htm'>Aux</a><a href='/settings.htm'>Settings</a><a href='/configuration.htm'>Config</a><a href='/wifi.htm'>WiFi</a><br /></div><div class='b'>
+<script>
+function s(key,v1) {var xhttp = new XMLHttpRequest();xhttp.open('GET', 'controlA.txt?'+key+'='+v1+'&x='+new Date().getTime(), true);xhttp.send();}function g(v1){s('dr',v1);}function gf(v1){s('dr',v1);autoFastRun();}function sf(key,v1){s(key,v1);autoFastRun();}
+</script>
+<script>
+function SetDateTime() {var d1 = new Date();var jan = new Date(d1.getFullYear(), 0, 1);var d = new Date(d1.getTime()-(jan.getTimezoneOffset()-d1.getTimezoneOffset())*60*1000);document.getElementById('dd').value = d.getDate();document.getElementById('dm').value = d.getMonth();document.getElementById('dy').value = d.getFullYear();document.getElementById('th').value = d.getHours();document.getElementById('tm').value = d.getMinutes();document.getElementById('ts').value = d.getSeconds();}
+</script>
+<script>var ajaxPage='control.txt';</script>
+<script>
+var auto1Tick=-1;
+var auto2Tick=0;
+var auto2Rate=5;
+var auto1=setInterval(autoRun1s,1000);
+function autoFastRun() {
+auto2Rate=1
+auto2Tick=15;
+}
+function autoRun1s() {
+auto1Tick++;
+var i;
+if (auto2Tick>=0) auto2Tick--;
+if (auto2Tick==0) auto2Rate=5;
+if (auto1Tick%auto2Rate==0) {
+nocache='?nocache='+Math.random()*1000000;
+var request = new XMLHttpRequest();
+request.onreadystatechange = pageReady(ajaxPage);
+request.open('GET',ajaxPage.toLowerCase()+nocache,true); request.send(null);
+}}
+function pageReady(aPage) {
+return function() {
+if ((this.readyState==4)&&(this.status==200)) {
+lines=this.responseText.split('\n');
+for (var i=0; i<lines.length; i++) {
+j=lines[i].indexOf('|');m=0;
+if (j==-1) {j=lines[i].indexOf('&');m=1;}
+v=lines[i].slice(j+1);
+k=lines[i].slice(0,j);
+if (k!=''&&document.getElementById(k)!=null) { if (m==1) document.getElementById(k).value=v; else  if (v=='disabled') document.getElementById(k).disabled=true; else if (v=='enabled') document.getElementById(k).disabled=false; else document.getElementById(k).innerHTML=v;}
+}
+}}}
+</script>
+<script>
+function changeLanguage(v) {
+var message='';
+if(v==0){
+message='设置语言为中文?Change the language to Chinese?';
+}
+if(v==1){
+message='Change the language to English?语言设置成英文?';
+}
+if(confirm(message)){
+var xhttp = new XMLHttpRequest();
+var res = '/settingsA.txt?lang='+encodeURIComponent(v)+'&x='+new Date().getTime();
+xhttp.open('GET', res, true);
+xhttp.send();
+alert('重启设备后生效。Effective after restarting the device.');
+}
+}
+</script>
+<div style='text-align: center; width: 30em'><form style='display: inline;' method='get' action='/control.htm'><button name='qb' class='bb' value='st' onpointerdown='SetDateTime();' title='Set Date/Time' type='submit'>&#x1F565;</button>&nbsp;&nbsp;<input id='dm' type='hidden' name='dm'><input id='dd' type='hidden' name='dd'><input id='dy' type='hidden' name='dy'><input id='th' type='hidden' name='th'><input id='tm' type='hidden' name='tm'><input id='ts' type='hidden' name='ts'></form><button id='c_goto' class='bb' onpointerdown="g('qc')" title='Continue Goto (when paused at home)' type='button' disabled>&#x27A4;&#x1F3E0;&#x27A4;</button>&nbsp;&nbsp;<button class='bb' onpointerdown="g('qh')" title='Find Home' type='button'>&#x27A5;&#x1F3E0;</button><button class='bb' onpointerdown="if (confirm('Are you sure?')) g('qr')" title='Home (Reset)' type='button'>&#9888;&#x1F3E0;</button>&nbsp;&nbsp;<button id='unpark' class='bb' onpointerdown="g('pu')" title='Un-Park' type='button' disabled>P&#x27A6;</button><button id='park' class='bb' onpointerdown="g('pk')" title='Park' type='button' disabled>&#x27A5;P</button>&nbsp;&nbsp;<button class='bb' style="height: 2.2em; color: White;" onpointerdown="g('qq')" title='Emergency Stop!' type='button'>Stop!</button></div><br class='clear' />
+<div class='b1' style='width: 8em'><div align='left'>Tracking:</div><button id='trk_on' class='btns_right' onpointerdown="s('dr','T1')" type='button' disabled>On</button><button id='trk_off' class='btns_left' onpointerdown="s('dr','T0')" type='button' disabled>Off</button><br /><button class='bbh' style='width: 2em' onpointerdown="g('Ts')" title='Sidereal Rate' type='button'>&#9733;</button><button class='bbh' style='width: 2em' onpointerdown="g('Tl')" title='Lunar Rate' type='button'>&#9790;</button><button class='bbh' style='width: 2em' onpointerdown="g('Th')" title='Solar Rate' type='button'>&#9737;</button></div><div class='b1' style='width: 16.2em'><div align='left'>Align:</div><form method='get' action='/control.htm'><button id='alg1' class='bbh' onpointerdown="s('al','1')" type='button' disabled>1&#9733;</button><button id='alg2' class='bbh' onpointerdown="s('al','3')" type='button' disabled>3&#9733;</button><button id='alg3' class='bbh' onpointerdown="s('al','9')" type='button' disabled>9&#9733;</button>&nbsp;&nbsp;&nbsp;<button id='alga' class='bbh' onpointerdown="s('al','n')" type='button' disabled>Accept</button><br /><button class='collapsible' style='padding-top: 4px; text-align: center;' type='button'>Refine PA</button><div class='content' style='padding: 5px'>Setup &amp; 3+ Star align mount. Goto bright star near NCP or SCP with Dec in 50 to 80&deg; range (N or S.) Press [Refine PA] button. Use mount's PA adjust controls to center the star again. Optionally align the mount again.<br /><button id='rpa' onpointerdown="if (confirm('Are you sure?')) s('rp','a')" type='button'>Refine PA</button><br /></div></form></div><br class='clear' />
+<div class='b1' style='width: 27em'><div align='left'>Guide:</div><button class='gb' onpointerdown="g('n1')" onpointerup="g('n0')" type='button'>N</button><br /><button class='gb' onpointerdown="g('e1')" onpointerup="g('e0')" type='button'>E</button><button class='gb' onpointerdown="g('sy')" title='Sync' type='button'>@</button><button class='gb' onpointerdown="g('w1')" onpointerup="g('w0')" type='button'>W</button><br /><button class='gb' onpointerdown="g('s1')" onpointerup="g('s0')" type='button'>S</button><br /><br /><form method='get' action="/control.htm"><button class='bbh' onpointerdown="g('R0')" type='button'>0.25</button><button class='bbh' onpointerdown="g('R1')" type='button'>0.5</button><button class='bbh' onpointerdown="g('R2')" type='button'>1x</button><button class='bbh' onpointerdown="g('R5')" type='button'>4x</button><button class='bbh' onpointerdown="g('R6')" type='button'>40x</button><button class='bbh' onpointerdown="g('R7')" type='button'>60x</button><button class='bbh' onpointerdown="g('R8')" type='button'>Max</button></div><br class='clear' />
+<br />
+<script>var cc = document.getElementsByClassName('collapsible');var i;for (i = 0; i < cc.length; i++) {cc[i].addEventListener('click', function() {this.classList.toggle('active');var ct = this.nextElementSibling;if (ct.style.display === 'block') { ct.style.display = 'none'; } else { ct.style.display = 'block'; }});}</script>
+</div></body></html>

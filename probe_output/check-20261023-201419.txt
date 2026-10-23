@@ -1,0 +1,17 @@
+== dashboard
+Current: &alpha;= 07:49:59 , &delta;= +89*36:45 &
+Parking: Not Parked &nbsp;&nbsp;Tracking: Off &nbsp;&nbsp;Tracking Rate: 0.000 Hz &nbsp;&nbsp;Maximum slew speed: 5.8 &deg;/s State: &nbsp;&nbsp;Last General (Background)
+== horizon limit
+value='0' type='number' name='hl'
+== control.txt
+trk_on|enabled
+trk_off|disabled
+park|enabled
+unpark|disabled
+c_goto|disabled
+alg1|disabled
+alg2|disabled
+alg3|disabled
+alga|disabled
+rpa|disabled
+

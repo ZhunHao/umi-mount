@@ -1,0 +1,19 @@
+== 2026-10-23 20:19:53 dashboard
+Current: &alpha;= 07:55:34 , &delta;= +89*36:45 &
+Parking: Not Parked &nbsp;&nbsp;Tracking: Off &nbsp;&nbsp;Tracking Rate: 0.000 Hz &nbsp;&nbsp;Maximum slew speed: 5.8 &deg;/s State: &nbsp;&nbsp;Last General (Background)
+2026-10-23 20:20:04  GET /controlA.txt?dr=qq ->  [http 200]
+2026-10-23 20:20:04  GET /controlA.txt?dr=R0 ->  [http 200]
+2026-10-23 20:20:11  GET /controlA.txt?dr=n1 ->  [http 200]
+2026-10-23 20:20:12  GET /controlA.txt?dr=n0 ->  [http 200]
+2026-10-23 20:20:21  GET /controlA.txt?dr=qh ->  [http 200]
+2026-10-23 20:20:21  GET /controlA.txt?dr=pk ->  [http 200]
+2026-10-23 20:20:22  GET /controlA.txt?dr=pu ->  [http 200]
+2026-10-23 20:20:33  GET /controlA.txt?dr=T1 ->  [http 200]
+2026-10-23 20:20:33  GET /controlA.txt?dr=T0 ->  [http 200]
+2026-10-23 20:20:42  GET /controlA.txt?dr=qr ->  [http 200]
+2026-10-23 20:20:42  GET /controlA.txt?dr=sy ->  [http 200]
+2026-10-23 20:20:48  GET /configurationA.txt?ol=89 ->  [http 200]
+2026-10-23 20:20:48  GET /configurationA.txt?ol=90 ->  [http 200]
+2026-10-23 20:20:55  GET /auxiliaryA.txt?x1v1=0 ->  [http 200]
+2026-10-23 21:08:49  GET /controlA.txt?dr=qq ->  [http 200]
+2026-10-23 21:08:49  GET /controlA.txt?dr=T0 ->  [http 200]

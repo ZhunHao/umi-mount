@@ -1,0 +1,56 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset='utf-8'/>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<STYLE>.clear { clear: both; } .a { background-color: #111111; } .t { padding: 10px 10px 20px 10px; width: 600px; border: 5px solid #551111; margin: 25px 25px 0px 25px;color: #999999; background-color: #111111; min-width: 30em; } input { text-align:center; padding: 2px; margin: 3px; font-weight: bold; width:5em; background-color: #B02020}.b { padding: 10px; border-left: 5px solid #551111; border-right: 5px solid #551111; border-bottom: 5px solid #551111; margin: 0px 25px 25px 25px; width: 600px; color: #999999;background-color: #111111; min-width: 30em; } select { width:4em; font-weight: bold; background-color: #B02020; padding: 2px 2px; } .c { color: #B02020; font-weight: bold; }h1 { text-align: right; } a:hover, a:active { background-color: red; } .y { color: #FFFF00; font-weight: bold; }a:link, a:visited { background-color: #332222; color: #A07070; border:1px solid red; padding: 5px 10px; margin: none; text-align: center; text-decoration: none; display: inline-block; }button:disabled { background-color: #733; color: #000; } button { background-color: #B02020; font-weight: bold; border-radius: 5px; margin: 2px; padding: 4px 8px; }.collapsible { background-color: #500808; color: #999; cursor: pointer; padding: 7px; width: 80%; border: none; text-align: left; outline: none; font-size: 14px; }.active, .collapsible:hover { background-color: #661111; } .content { padding: 0px 18px; display: none; overflow: hidden; background-color: #301212; }</STYLE></head>
+<body bgcolor='#26262A'>
+<div class='t'><table width='100%%'><tr><td><b><font size='5'>MeowAstro</font></b><a href='#' onclick='changeLanguage(0)'>中文</a></td><td align='right'><b>WiFi Server 2.1v (OnStep 4.21e)</b></td></tr></table><a href='/index.htm'>Status</a><a href='/control.htm'>Control</a><a href='/auxiliary.htm'>Aux</a><a href='/settings.htm'>Settings</a><a href='/configuration.htm' style='background-color: #552222;'>Config</a><a href='/wifi.htm'>WiFi</a><br /></div><div class='b'>
+<script>
+function s(key,v1) {var xhttp = new XMLHttpRequest();xhttp.open('GET', 'configurationA.txt?'+key+'='+v1+'&x='+new Date().getTime(), true);xhttp.send();}</script>
+<script>
+function changeLanguage(v) {
+var message='';
+if(v==0){
+message='设置语言为中文?Change the language to Chinese?';
+}
+if(v==1){
+message='Change the language to English?语言设置成英文?';
+}
+if(confirm(message)){
+var xhttp = new XMLHttpRequest();
+var res = '/settingsA.txt?lang='+encodeURIComponent(v)+'&x='+new Date().getTime();
+xhttp.open('GET', res, true);
+xhttp.send();
+alert('重启设备后生效。Effective after restarting the device.');
+}
+}
+</script>
+<div style='width: 35em;'>Basic:<br /><br /><button type='button' class='collapsible'>Site Latitude, Longitude, UTC Offset</button><div class='content'><br />
+<form method='get' action='/configuration.htm'><input style='width: 4em;' value='-103' type='number' name='g1' min='-180' max='180'>&nbsp;&deg;&nbsp;<input style='width: 3.5em;' value='39' type='number' name='g2' min='0' max='60'>&nbsp;'&nbsp;<input style='width: 3.5em;' value='59' type='number' name='g3' min='0' max='60'>&nbsp;"&nbsp;&nbsp; &nbsp;Longitude deg. min. sec. +/- 180, W is +<br />
+<input style='width: 4em;' value='1' type='number' name='t1' min='-90' max='90'>&nbsp;&deg;&nbsp;<input style='width: 3.5em;' value='20' type='number' name='t2' min='0' max='60'>&nbsp;'&nbsp;<input style='width: 3.5em;' value='00' type='number' name='t3' min='0' max='60'>&nbsp;"&nbsp;&nbsp; &nbsp;Latitude deg. min. sec. +/- 90, N is +<br />
+<input style='width: 4em;' value='-08' type='number' name='u1' min='-14' max='12'>&nbsp;h&nbsp;<select name='u2'><option value='0' selected>00</option><option value='30' >30</option><option value='45' >45</option></select>&nbsp;m&nbsp;&nbsp;&nbsp;UTC Offset, in hours and min. -14 to +12<br />Opposite of a time-zone value, this is for Standard Time (not Daylight Time.)<br /><br /><button type='submit'>Upload</button>
+
+</form><br />
+</div><br />
+<button type='button' class='collapsible'>Horizon and Overhead Limits</button><div class='content'><br />
+<form method='get' action='/configuration.htm'><input value='0' type='number' name='hl' min='-30' max='30'>&nbsp;Horizon, minimum altitude in degrees +/- 30<br />
+<input value='90' type='number' name='ol' min='60' max='90'>&nbsp;Overhead, maximum altitude in degrees 60 to 90<br /><br /><button type='submit'>Upload</button>
+
+</form><br />
+</div><br />
+<br /><button type='button' class='collapsible'>Axis1 RA/Azm</button><div class='content'><br />
+<form method='get' action='/configuration.htm'><input value='0' type='number' name='b1' min='0' max='3600'>&nbsp;Backlash, in arc-seconds 0 to 3600<br />
+<input value='0' type='number' name='el' min='-270' max='270'>&nbsp;Past Meridian when East of the pier, in degrees +/- 270<br />
+<input value='0' type='number' name='wl' min='-270' max='270'>&nbsp;Past Meridian when West of the pier, in degrees +/- 270<br /><br /><button type='submit'>Upload</button>
+
+</form><br />
+</div><br />
+<button type='button' class='collapsible'>Axis2 Dec/Alt</button><div class='content'><br />
+<form method='get' action='/configuration.htm'><input value='0' type='number' name='b2' min='0' max='3600'>&nbsp;Backlash, in arc-seconds 0 to 3600<br /><br /><button type='submit'>Upload</button>
+
+</form><br />
+</div><br />
+<br />
+<script>var cc = document.getElementsByClassName('collapsible');var i;for (i = 0; i < cc.length; i++) {cc[i].addEventListener('click', function() {this.classList.toggle('active');var ct = this.nextElementSibling;if (ct.style.display === 'block') { ct.style.display = 'none'; } else { ct.style.display = 'block'; }});}</script>
+<br /></div></div></body></html>

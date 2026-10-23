@@ -1,0 +1,38 @@
+:GVP# -> <no reply>
+:GVN# -> <no reply>
+:GVD# -> Nov  2 2023#
+:GVT# -> 20:46:24#
+:GU# -> nNpHz/Eo260#
+:GC# -> 10/23/26#
+:Ga# -> 07:22:01#
+:GL# -> 19:22:01#
+:GS# -> <no reply>
+:GG# -> -08#
+:Gt# -> <no reply>
+:Gg# -> -103*40#
+:Gm# -> N#
+:GT# -> 0.00000#
+:Gh# -> <no reply>
+:Go# -> 90*#
+:GM# -> None#
+:GN# -> None#
+:GO# -> None#
+:GP# -> <no reply>
+:GR# -> <no reply>
+:GD# -> +90*00:00#
+:GA# -> +01*20:00#
+:Gr# -> 00:00:00#
+:Gd# -> <no reply>
+:FA# -> 0
+:Fa# -> <no reply>
+:FT# -> <no reply>
+:FG# -> <no reply>
+:FM# -> <no reply>
+:Fe# -> <no reply>
+:Ft# -> <no reply>
+:Fu# -> <no reply>
+:FB# -> <no reply>
+:FC# -> <no reply>
+:Fc# -> <no reply>
+:FD# -> <no reply>
+:FP# -> <no reply>

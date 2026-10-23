@@ -1,0 +1,54 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset='utf-8'/>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<STYLE>.clear { clear: both; } .a { background-color: #111111; } .t { padding: 10px 10px 20px 10px; width: 600px; border: 5px solid #551111; margin: 25px 25px 0px 25px;color: #999999; background-color: #111111; min-width: 30em; } input { text-align:center; padding: 2px; margin: 3px; font-weight: bold; width:5em; background-color: #B02020}.b { padding: 10px; border-left: 5px solid #551111; border-right: 5px solid #551111; border-bottom: 5px solid #551111; margin: 0px 25px 25px 25px; width: 600px; color: #999999;background-color: #111111; min-width: 30em; } select { width:4em; font-weight: bold; background-color: #B02020; padding: 2px 2px; } .c { color: #B02020; font-weight: bold; }h1 { text-align: right; } a:hover, a:active { background-color: red; } .y { color: #FFFF00; font-weight: bold; }a:link, a:visited { background-color: #332222; color: #A07070; border:1px solid red; padding: 5px 10px; margin: none; text-align: center; text-decoration: none; display: inline-block; }button:disabled { background-color: #733; color: #000; } button { background-color: #B02020; font-weight: bold; border-radius: 5px; margin: 2px; padding: 4px 8px; }.b1 { float: left; border: 2px solid #551111; background-color: #181818; text-align: center; margin: 5px; padding: 15px; padding-top: 3px; }.gb {  font-weight: bold; font-size: 150%; font-family: 'Times New Roman', Times, serif; width: 60px; height: 50px; padding: 0px; }.bb {  font-weight: bold; font-size: 105%; } .bbh {  font-weight: bold; font-size: 100%; height: 2.1em; }.btns_left { margin-left: -1px; border-top-left-radius: 0px; border-bottom-left-radius: 0px; }.btns_mid { margin-left: -1px; margin-right: -1px; border-top-left-radius: 0px; border-bottom-left-radius: 0px; border-top-right-radius: 0px; border-bottom-right-radius: 0px; }.btns_right { margin-right: -1px; border-top-right-radius: 0px; border-bottom-right-radius: 0px; }</STYLE></head>
+<body bgcolor='#26262A'>
+<div class='t'><table width='100%%'><tr><td><b><font size='5'>MeowAstro</font></b><a href='#' onclick='changeLanguage(0)'>中文</a></td><td align='right'><b>WiFi Server 2.1v (OnStep 4.21e)</b></td></tr></table><a href='/index.htm'>Status</a><a href='/control.htm'>Control</a><a href='/auxiliary.htm' style='background-color: #552222;'>Aux</a><a href='/settings.htm'>Settings</a><a href='/configuration.htm'>Config</a><a href='/wifi.htm'>WiFi</a><br /></div><div class='b'>
+<script>
+function s(key,v1) {
+var xhttp = new XMLHttpRequest();
+xhttp.open('GET', 'auxiliaryA.txt?'+key+'='+v1+'&x='+new Date().getTime(), true);
+xhttp.send();
+}
+function g(v1){s('dr',v1);}
+function gf(v1){s('dr',v1);autoFastRun();}
+function sf(key,v1){s(key,v1);autoFastRun();}
+</script>
+<script>
+function changeLanguage(v) {
+var message='';
+if(v==0){
+message='设置语言为中文?Change the language to Chinese?';
+}
+if(v==1){
+message='Change the language to English?语言设置成英文?';
+}
+if(confirm(message)){
+var xhttp = new XMLHttpRequest();
+var res = '/settingsA.txt?lang='+encodeURIComponent(v)+'&x='+new Date().getTime();
+xhttp.open('GET', res, true);
+xhttp.send();
+alert('重启设备后生效。Effective after restarting the device.');
+}
+}
+</script>
+<script>var ajaxPage='auxiliary.txt';</script>
+<div class='b1' style='width: 27em'>
+<div align='left'>Auxiliary Features:<br /><br /></div>
+<div style='float: left; width: 8em; height: 2em; line-height: 2em'>&bull;CAMERA&bull;</div><div style='float: left; width: 14em; height: 2em; line-height: 2em'><button onpointerdown="s('x1v1','1')" type='button'>Start</button><button onpointerdown="s('x1v1','0')" type='button'>Stop</button>
+</div><div style='float: left; width: 4em; height: 2em; line-height: 2em'><span id='x1v1'>-</span>
+</div>
+<div style='float: left; text-align: right; width: 8em; height: 2em; line-height: 2em'>Count</div><div style='float: left; width: 14em; height: 2em; line-height: 2em'><input style='width: 12em; background: #111' type='range' min='1' max='255' value='0' onchange="sf('x1v4',this.value)"></div><div style='float: left; width: 4em; height: 2em; line-height: 2em'><span id='x1v4'>0</span> x
+</div>
+<div style='float: left; text-align: right; width: 8em; height: 2em; line-height: 2em'>Exposure</div><div style='float: left; width: 14em; height: 2em; line-height: 2em'><input style='width: 12em; background: #111' type='range' min='0' max='255' value='0' onchange="sf('x1v2',this.value)"></div><div style='float: left; width: 4em; height: 2em; line-height: 2em'><span id='x1v2'>0.016</span> sec
+</div>
+<div style='float: left; text-align: right; width: 8em; height: 2em; line-height: 2em'>Delay</div><div style='float: left; width: 14em; height: 2em; line-height: 2em'><input style='width: 12em; background: #111' type='range' min='10' max='255' value='1' onchange="sf('x1v3',this.value)"><span id='x1v3'>0.02</span> sec
+</div>
+<br/><div style='float: left; width: 26em'><hr></div>
+<div style='float: left; width: 8em; height: 2em; line-height: 2em'>&bull;ALTAZM&bull;</div><div style='float: left; width: 14em; height: 2em; line-height: 2em'><button id='sw4_on' class='btns_right' style='line-height: 1.2rem' onpointerdown="s('x4v1','1')" type='button' disabled>On</button><button id='sw4_off' class='btns_left' style='line-height: 1.2rem' onpointerdown="s('x4v1','0')" type='button' disabled>Off</button>
+</div><div style='float: left; width: 4em; height: 2em; line-height: 2em'></div>
+</div><br class='clear' />
+<br />
+</div></body></html>

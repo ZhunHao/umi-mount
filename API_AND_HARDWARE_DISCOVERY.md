@@ -93,6 +93,31 @@ The mount implements a **press-to-move, release-to-stop** pattern:
 | **Lunar Rate** | `GET /controlA.txt?dr=Tl` |
 | **Solar Rate** | `GET /controlA.txt?dr=Th` |
 
+### 4.5. Full `dr=` List (Stock `control.htm`)
+
+Source: `raw_stock_ui/control.htm`, read 2026-10-23. Every control on the page sends one of these requests. Sections 4.1–4.4 cover the same codes; this table is the complete set, including the ones not listed above.
+
+| Button | Request | Notes |
+| :--- | :--- | :--- |
+| Motion start | `dr=n1`, `s1`, `e1`, `w1` | Pointer down |
+| Motion stop | `dr=n0`, `s0`, `e0`, `w0` | Pointer up |
+| Speed rates | `dr=R0`, `R1`, `R2`, `R5`, `R6`, `R7`, `R8` | The page has no `R3`, `R4` or `R9` buttons |
+| Emergency stop | `dr=qq` | |
+| Find home | `dr=qh` | |
+| Home (reset) | `dr=qr` | Behind `confirm()`. Sets the current position as home |
+| Continue goto | `dr=qc` | Enabled only when paused at home (`c_goto` in `control.txt`) |
+| Park / Unpark | `dr=pk` / `dr=pu` | |
+| Sync | `dr=sy` | Syncs to the **target**, not the telescope's position. See the warning below |
+| Tracking | `dr=T1`, `T0`, `Ts`, `Tl`, `Th` | Section 4.4 |
+| Alignment | `controlA.txt?al=1`, `al=3`, `al=9`, `al=n` | Buttons `alg1`, `alg2`, `alg3`, `alga`. Enabled via `control.txt` |
+| Unlabelled | `controlA.txt?rp=a` | The `rpa` button, behind `confirm()`, with no title. Function not identified. Don't press until it is |
+| Set date/time | `GET /control.htm?qb=st&dd=…&dm=…&dy=…&th=…&tm=…&ts=…` | A form submit to the page, not `controlA.txt`. Writes the mount clock from the browser. Not tested |
+
+Notes:
+* The page has **no goto button**. Goto isn't a stock HTTP function. Use LX200 on port 9999 instead ([OnStep command reference](https://onstep.groups.io/g/main/wiki/23755)).
+* **Sync warning:** `dr=sy` syncs to the current target, and the page can't set the target. On 2026-10-23 the target was `00:00:00 +00*00:00`. Pressing Sync wrote RA 0h, Dec 0° into the mount's model while the telescope was near the pole, which broke the pointing. To sync correctly, set the target over LX200 first (`:SrHH:MM:SS#`, then `:SdsDD:MM:SS#`), then send `:CS#`, per the same wiki.
+* Every request is a GET with no confirmation. `200` means the mount accepted it, not that it ran.
+
 ---
 
 ## 5. Telemetry & Polling Endpoint (`/control.txt`)
