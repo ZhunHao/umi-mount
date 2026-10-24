@@ -29,7 +29,14 @@ CONFIG_PAGE = ("<input value='0' type='number' name='b1' min='0' max='3600'>"
                "<input value='0' type='number' name='hl' min='-30' max='30'>"
                "<input value='90' type='number' name='ol' min='60' max='90'>"
                "<input style='width: 4em;' value='-103' type='number' name='g1' min='-180' max='180'>")
-PAGES = {"/control.txt": CONTROL, "/settings.txt": SETTINGS, "/auxiliary.txt": AUXILIARY,
+INDEX_PAGE = ("<html><body>Site: UT (web browser) 10/23/26 13:13:24 UT ( 22:15:58 LST) "
+              "Coordinates: Current: &alpha;= 00:04:34 , &delta;= +00*00:00 "
+              "Pier Side= West (meridian flips On ) Polar Alignment: &#x25c4; 12 &quot; &#x25b2; -3 &quot; "
+              "(Mount relative to NCP) Operations: Parking: Not Parked &nbsp;&nbsp;Tracking: Off "
+              "&nbsp;&nbsp;Tracking Rate: 0.000 Hz &nbsp;&nbsp;Maximum slew speed: 5.8 &deg;/s State: "
+              "Last General (Background) Error: None &nbsp;&nbsp;Workload: 11% "
+              "&nbsp;&nbsp;Wireless signal strength: 31dBm (100%)</body></html>")
+PAGES = {"/index.htm": INDEX_PAGE, "/control.txt": CONTROL, "/settings.txt": SETTINGS, "/auxiliary.txt": AUXILIARY,
          "/configuration.htm": CONFIG_PAGE}
 LX_REPLIES = {"GR": "07:46:01#", "GD": "+89*36:40#", "GU": "nNpHz/Eo260#", "GA": "+01*20:02#",
               "GS": "21:12:24#", "Gm": "N#", "Gr": "00:00:00#", "Gd": "+00*00:00#", "Gt": "+01*20#",
@@ -165,12 +172,48 @@ def main():
         check("config write: in range forwarded", r["ok"] and any("configurationA.txt?b1=10" in p for p in received), (r, received))
 
         st, r = post("/api/mount", {"file": "auxiliaryA.txt", "key": "x1v2", "value": "0.030"})
-        check("aux write: decimal value forwarded", r["ok"], r)
+        check("aux write: exposure as seconds is refused (it takes a 0-255 slider position)", not r["ok"], r)
+        st, r = post("/api/mount", {"file": "auxiliaryA.txt", "key": "x1v2", "value": "40"})
+        check("aux write: exposure slider position forwarded", r["ok"], r)
+        st, r = post("/api/mount", {"file": "auxiliaryA.txt", "key": "x1v3", "value": "5"})
+        check("aux write: delay below the slider minimum (10) refused", not r["ok"], r)
+
+        st, data = ui_request("GET", "/api/dashboard")
+        dash = json.loads(data)
+        v = dash.get("values", {})
+        check("dashboard: parses the status page",
+              dash["ok"] and v["polar_alignment"] == ["12", "-3"] and v["workload"] == "11%"
+              and v["signal"] == "31dBm (100%)" and v["last_error"] == "None" and v["tracking_rate"] == "0.000"
+              and v["pier_side"] == "West" and v["meridian_flips"] == "On" and v["parking"] == "Not Parked", v)
 
         st, _ = ui_request("POST", "/api/mount", json.dumps({"file": "controlA.txt", "key": "dr", "value": "qq"}).encode(),
                            content_type="text/plain")
         check("POST without application/json refused (drive-by form post)", st == 415, st)
 
+        st, js = ui_request("GET", "/mount3d.js")
+        check("serves the 3D view script", st == 200 and b"MountView" in js, st)
+
+        # An unreachable mount: status must come back fast, marked offline, with no position.
+        offline = subprocess.Popen([sys.executable, str(HERE / "server.py"), "--mount", "http://127.0.0.1:9",
+                                    "--lx-port", "9", "--port", str(UI_PORT + 1)],
+                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            wait_port(UI_PORT + 1)
+            conn = http.client.HTTPConnection("127.0.0.1", UI_PORT + 1, timeout=10)
+            started = time.time()
+            conn.request("GET", "/api/status")
+            o = json.loads(conn.getresponse().read())
+            elapsed = time.time() - started
+            check("offline mount: status returns quickly and says offline",
+                  o["online"] is False and o["position"]["ra"] is None and elapsed < 2.5, (elapsed, o["online"]))
+        finally:
+            offline.terminate()
+            offline.wait(timeout=5)
+
+        st, _ = ui_request("GET", "/img/does-not-exist.jpg")
+        check("image route: missing file is 404", st == 404, st)
+        st, _ = ui_request("GET", "/img/..%2Fserver.py")
+        check("image route: path tricks refused", st == 404, st)
         st, _ = ui_request("GET", "/api/status", host="evil.example:18090")
         check("request with a foreign Host header refused", st == 403, st)
 

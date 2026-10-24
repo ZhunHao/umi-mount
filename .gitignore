@@ -1,2 +1,8 @@
 # Mount login session cookies, written by the WiFi login probe
 probe_output/**/cookies.txt
+
+# Third-party reference photos: not ours to publish
+mount_ui/img/
+
+# Python bytecode
+__pycache__/

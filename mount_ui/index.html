@@ -5,406 +5,514 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>UMi 17 Lite</title>
 <style>
-/* Red-only palette: the screen stays dark and the only hue is red, so it doesn't wreck night vision. */
+/* Console for the UMi 17 Lite. Black, white and hairlines from DESIGN-spacex.md; no accent colour.
+   State is shown by inversion: a filled white control is the active one. */
 :root {
-  --bg: #000;
-  --raised: #150605;
-  --pressed: #2a0b09;
-  --line: #3a1210;
-  --line-soft: #1f0908;
-  --label: #b5604f;
-  --ink: #ff8a73;
-  --ink-strong: #ffc1b2;
-  --accent: #b8291d;
-  --accent-hi: #ff5a44;
-  --stop: #d3200f;
-  --sans: "Avenir Next", "Helvetica Neue", system-ui, sans-serif;
-  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --bg: #000000;
+  --panel: #0a0a0a;
+  --hair: #3a3a3f;
+  --hair-soft: #1c1c20;
+  --ink: #ffffff;
+  --ink-2: #d6d6de;
+  --label: #8f909a;
+  --din: "D-DIN", "DIN Alternate", "DIN 2014", Bahnschrift, "Arial Narrow", Arial, sans-serif;
 }
 * { box-sizing: border-box; }
 html { background: var(--bg); }
-body {
-  margin: 0; color: var(--ink); background: var(--bg);
-  font: 15px/1.45 var(--sans); -webkit-font-smoothing: antialiased;
-}
+body { margin: 0; background: var(--bg); color: var(--ink-2); font: 15px/1.45 var(--din); -webkit-font-smoothing: antialiased; }
 button, input { font: inherit; }
+:focus-visible { outline: 1px solid var(--ink); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
 
-/* Header */
-.top {
-  display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap;
-  max-width: 1200px; margin: 0 auto; padding: 18px 20px 12px;
-}
-h1 { margin: 0; font: 600 18px var(--sans); color: var(--ink-strong); letter-spacing: .01em; }
-.state { font: 500 13px var(--mono); color: var(--label); }
-.state.on { color: var(--ink); }
-.state.off { color: var(--accent-hi); }
-.stamp { font: 12px var(--mono); color: var(--label); }
+/* Small uppercase labels name each value, as on an instrument panel. */
+.cap { font-size: 11px; line-height: 1.3; letter-spacing: .96px; text-transform: uppercase; color: var(--label); }
 
-/* Stop: always in view, the largest thing on the page */
-.stopbar {
-  position: sticky; top: 0; z-index: 5; background: var(--bg);
-  border-bottom: 1px solid var(--line); padding: 12px 20px;
+/* ---- Header ---- */
+.head {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 10px 16px; border-bottom: 1px solid var(--hair);
 }
-.stopbar .inner { max-width: 1200px; margin: 0 auto; }
+.head h1 { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: .5px; color: var(--ink); }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px;
+  border: 1px solid var(--hair); border-radius: 4px; font-size: 12px; letter-spacing: .5px; color: var(--ink-2); white-space: nowrap;
+}
+.chip b { font-weight: 600; color: var(--ink); }
+.chip.alert { border-color: var(--ink); }
+.chip.dim { color: var(--label); }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--label); }
+.dot.on { background: var(--ink); }
+.clock { margin-left: auto; display: flex; gap: 14px; font-size: 13px; color: var(--label); }
+.clock b { color: var(--ink-2); font-weight: 500; }
+
+/* ---- Stop ---- */
+.stopbar { position: sticky; top: 0; z-index: 10; background: var(--bg); padding: 8px 16px; border-bottom: 1px solid var(--hair); }
 .stop {
-  display: block; width: 100%; min-height: 72px; border: 0; border-radius: 4px;
-  background: var(--stop); color: #fff; font: 700 22px var(--sans); letter-spacing: .02em;
-  cursor: pointer; touch-action: manipulation;
+  display: flex; align-items: center; justify-content: center; gap: 16px; width: 100%; min-height: 54px;
+  border: 0; border-radius: 4px; background: var(--ink); color: #000; cursor: pointer; touch-action: manipulation;
+  font-size: 19px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
 }
-.stop:active { background: #a31609; }
-.stopbar small { display: block; margin-top: 6px; color: var(--label); font-size: 13px; text-align: center; }
+.stop span { font-size: 12px; font-weight: 400; letter-spacing: .3px; text-transform: none; opacity: .65; }
+.stop:active { background: #cfcfd6; }
 
-/* Layout: readout beside controls on wide screens, stacked on phones */
-.layout {
-  display: grid; gap: 28px; max-width: 1200px; margin: 0 auto; padding: 24px 20px 48px;
+/* ---- Console regions ---- */
+.console { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "view" "ctrl" "tele" "drawer"; }
+.region { padding: 16px; min-width: 0; scroll-margin-top: 80px; }
+.view { grid-area: view; }
+.ctrl { grid-area: ctrl; border-top: 1px solid var(--hair); }
+.tele { grid-area: tele; border-top: 1px solid var(--hair); }
+.drawer { grid-area: drawer; border-top: 1px solid var(--hair); padding: 0; }
+@media (min-width: 760px) {
+  .console { grid-template-columns: minmax(0, 1fr) 340px; grid-template-areas: "view ctrl" "tele ctrl" "drawer drawer"; }
+  .ctrl { border-top: 0; border-left: 1px solid var(--hair); }
 }
-@media (min-width: 900px) {
-  .layout { grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); align-items: start; }
-  .readout { position: sticky; top: 120px; }
+@media (min-width: 1200px) {
+  .console { grid-template-columns: 290px minmax(0, 1fr) 350px; grid-template-areas: "tele view ctrl" "drawer drawer drawer"; }
+  .tele { border-top: 0; border-right: 1px solid var(--hair); }
+}
+.region-title { margin: 0 0 12px; }
+
+/* ---- 3D view and sky chart ---- */
+.stage { position: relative; }
+.stage canvas {
+  display: block; width: 100%; height: clamp(300px, 46vh, 560px);
+  background: var(--panel); border: 1px solid var(--hair-soft); border-radius: 4px; touch-action: none; cursor: grab;
+}
+.stage canvas:active { cursor: grabbing; }
+.hud { position: absolute; top: 10px; left: 12px; pointer-events: none; display: grid; gap: 2px; }
+.hud .mode { font-size: 12px; letter-spacing: .96px; text-transform: uppercase; color: var(--ink); }
+.hud .line { font-size: 13px; color: var(--ink-2); }
+.stage .reset { position: absolute; right: 10px; top: 10px; min-height: 30px; padding: 0 10px; font-size: 12px; }
+.stage-note { margin: 8px 0 0; font-size: 12px; color: var(--label); }
+.sky { margin: 16px 0 0; }
+.sky svg { display: block; width: 100%; height: auto; }
+.sky .frame { stroke: var(--hair); fill: none; }
+.sky .grid { stroke: var(--hair-soft); }
+.sky .meridian, .sky .pole { stroke: #55555c; }
+.sky text { fill: var(--label); font: 400 13px var(--din); }
+.sky text.now { fill: var(--ink-2); font-size: 14px; }
+.sky .dot { fill: var(--ink); }
+.sky .dot.off { fill: none; stroke: var(--ink); stroke-width: 2; stroke-dasharray: 4 4; }
+.sky .target { stroke: var(--ink-2); stroke-width: 1.5; }
+.sky .trail { fill: var(--ink); }
+.sky .arrow { stroke: var(--ink); stroke-width: 3; fill: var(--ink); }
+
+/* ---- Telemetry ---- */
+.big { display: grid; gap: 14px; margin: 0 0 18px; }
+.big dd { margin: 3px 0 0; font-size: 32px; line-height: 1; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: .3px; }
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; margin: 0; padding: 14px 0; border-top: 1px solid var(--hair-soft); }
+.fields dd { margin: 2px 0 0; color: var(--ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+dt { margin: 0; }
+.note { margin: 12px 0 0; padding: 10px 12px; border: 1px solid var(--hair); border-radius: 4px; font-size: 12px; line-height: 1.5; color: var(--ink-2); }
+@media (min-width: 760px) and (max-width: 1199px) {
+  .tele-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
 }
 
-/* Readout */
-.coords { margin: 0; display: grid; gap: 18px; }
-.coords div { min-width: 0; }
-dt { color: var(--label); font-size: 13px; }
-.coords dd {
-  margin: 4px 0 0; font: 500 clamp(30px, 7vw, 44px)/1 var(--mono);
-  color: var(--ink-strong); font-variant-numeric: tabular-nums; letter-spacing: -.01em;
-}
-.facts {
-  margin: 24px 0 0; padding-top: 18px; border-top: 1px solid var(--line);
-  display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px;
-}
-.facts dd { margin: 3px 0 0; color: var(--ink-strong); font-variant-numeric: tabular-nums; }
-.facts .mono { font: 13px var(--mono); }
-.note {
-  margin: 22px 0 0; padding-left: 12px; border-left: 2px solid var(--accent);
-  color: var(--label); font-size: 13px;
-}
-
-/* Sections: hairlines, not boxes */
-.block { padding: 20px 0; border-top: 1px solid var(--line); }
-.block:first-child { border-top: 0; padding-top: 0; }
-.block h2, .block summary {
-  margin: 0 0 14px; font: 600 14px var(--sans); color: var(--label); cursor: pointer;
-}
-.block h2 { cursor: default; }
-summary { list-style: none; display: flex; justify-content: space-between; align-items: center; }
-summary::-webkit-details-marker { display: none; }
-summary::after { content: "+"; color: var(--accent-hi); font: 400 22px/1 var(--sans); }
-details[open] > summary::after { content: "–"; }
-details[open] > summary { margin-bottom: 14px; }
-.hint { margin: 12px 0 0; color: var(--label); font-size: 13px; }
-
-/* Buttons: outlined by default, filled only when active or dangerous */
+/* ---- Controls ---- */
+.group { padding: 14px 0; border-top: 1px solid var(--hair-soft); }
+.group:first-child { padding-top: 0; border-top: 0; }
+.group > .cap { margin: 0 0 10px; }
 button {
-  min-height: 48px; padding: 0 16px; border: 1px solid var(--line); border-radius: 4px;
-  background: var(--raised); color: var(--ink); cursor: pointer;
+  min-height: 44px; padding: 0 12px; border: 1px solid #4a4a52; border-radius: 4px;
+  background: transparent; color: var(--ink-2); cursor: pointer; font-size: 14px; letter-spacing: .3px;
   touch-action: manipulation; -webkit-user-select: none; user-select: none;
 }
-button:hover:not(:disabled) { border-color: var(--accent); }
-button:active:not(:disabled) { background: var(--pressed); }
-button:disabled { opacity: .28; cursor: default; }
-button.current { background: var(--accent); border-color: var(--accent-hi); color: #fff; }
-button.hold { touch-action: none; }
-:focus-visible { outline: 2px solid var(--accent-hi); outline-offset: 2px; }
+button:hover:not(:disabled) { border-color: var(--ink-2); color: var(--ink); }
+button:active:not(:disabled) { background: #1c1c20; }
+button:disabled { opacity: .3; cursor: default; }
+button.current, button.held { background: var(--ink); border-color: var(--ink); color: #000; opacity: 1; }
+button.sent { border-color: var(--ink); color: var(--ink); }
+button.warn { border-color: var(--ink-2); }
+.row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.row + .row { margin-top: 6px; }
+.cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.cols4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.speeds { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.speeds button { padding: 0; font-size: 13px; }
 
-.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.seg { display: inline-flex; flex-wrap: wrap; }
-.seg button { border-radius: 0; margin-left: -1px; min-width: 52px; font: 500 14px var(--mono); }
-.seg button:first-child { border-radius: 4px 0 0 4px; margin-left: 0; }
-.seg button:last-child { border-radius: 0 4px 4px 0; }
-.seg + .seg { margin-top: 10px; }
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pad { display: grid; grid-template-columns: repeat(3, 72px); grid-template-rows: repeat(3, 64px); gap: 6px; justify-content: center; }
+.pad button { min-height: 0; padding: 0; font-size: 16px; font-weight: 700; letter-spacing: 1px; touch-action: none; }
+.pad .hub { display: grid; place-items: center; font-size: 11px; color: var(--label); letter-spacing: .96px; }
+.pad-hint { margin: 10px 0 0; font-size: 12px; color: var(--label); text-align: center; }
 
-/* D-pad */
-.pad {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
-  max-width: 270px; margin: 0 auto;
+/* ---- Drawer: tabbed panels ---- */
+.tabs { display: flex; gap: 0; overflow-x: auto; border-bottom: 1px solid var(--hair); scrollbar-width: none; }
+.tabs button {
+  flex: 0 0 auto; min-height: 46px; padding: 0 16px; border: 0; border-bottom: 2px solid transparent; border-radius: 0;
+  background: none; color: var(--label); font-size: 12px; letter-spacing: .96px; text-transform: uppercase;
 }
-.pad button { min-height: 76px; font: 600 20px var(--sans); }
-.pad-center {
-  display: grid; place-items: center;
-}
-.pad-center::before {
-  content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--accent);
-}
-
-/* Settings rows and fields */
-.srow {
-  display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
-  padding: 12px 0; border-top: 1px solid var(--line-soft);
-}
-.srow:first-of-type { border-top: 0; }
-.srow > span:first-child { color: var(--label); font-size: 14px; }
-.srow em { font: 13px var(--mono); color: var(--ink-strong); font-style: normal; }
-.field {
-  display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
-  padding: 12px 0; border-top: 1px solid var(--line-soft);
-}
-.field:first-of-type { border-top: 0; }
-.field > span:first-child { color: var(--label); font-size: 14px; }
-.field em { font: 13px var(--mono); color: var(--ink-strong); font-style: normal; }
-.field .row { flex-wrap: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+.panel { padding: 16px; }
+.panel[hidden] { display: none; }
+.panel-grid { display: grid; gap: 0 32px; }
+@media (min-width: 900px) { .panel-grid { grid-template-columns: 1fr 1fr; } }
+.item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--hair-soft); }
+.item .what { color: var(--ink); }
+.item .why { grid-column: 1 / -1; margin: -2px 0 0; font-size: 12px; color: var(--label); line-height: 1.5; }
+.item .now { color: var(--ink); font-variant-numeric: tabular-nums; }
+.item.missing .row button { opacity: .3; pointer-events: none; }
+.stack { display: grid; gap: 6px; justify-items: end; }
+.item .row + .row { margin-top: 0; }
+.item .missing-note { display: none; font-size: 12px; color: var(--label); }
+.item.missing .missing-note { display: block; grid-column: 1 / -1; }
 input[type=text], input[type=number] {
-  min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 4px;
-  background: #050101; color: var(--ink-strong); font: 15px var(--mono); width: 150px;
+  min-height: 44px; width: 130px; padding: 0 10px; border: 1px solid #4a4a52; border-radius: 4px;
+  background: var(--bg); color: var(--ink); font-size: 15px; font-variant-numeric: tabular-nums;
 }
-input:focus-visible { outline: 2px solid var(--accent-hi); outline-offset: 2px; }
-.narrow { width: 104px !important; }
-.goto-check { display: flex; gap: 10px; align-items: center; margin: 16px 0 12px; color: var(--ink); }
-.goto-check input { width: 22px; height: 22px; accent-color: var(--accent); }
-
-/* Log */
-#log {
-  list-style: none; margin: 0; padding: 0; max-height: 240px; overflow: auto;
-  font: 12.5px/1.6 var(--mono); color: var(--label);
-}
-#log li.bad { color: var(--accent-hi); }
+input[type=range] { width: 180px; accent-color: #ffffff; }
+.check { display: flex; gap: 8px; align-items: center; color: var(--ink-2); }
+.check input { width: 18px; height: 18px; accent-color: #ffffff; }
+#log { list-style: none; margin: 0; padding: 0; max-height: 260px; overflow: auto; font-size: 13px; line-height: 1.7; color: var(--label); font-variant-numeric: tabular-nums; }
+#log li.bad { color: var(--ink); }
 
 @media (max-width: 480px) {
-  .pad { max-width: 240px; }
+  .clock { margin-left: 0; }
+  .pad { grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(3, 58px); }
+  .big dd { font-size: 28px; }
+  input[type=range] { width: 140px; }
 }
 </style>
 </head>
 <body>
 
-<header class="top">
+<header class="head">
   <h1>UMi 17 Lite</h1>
-  <div class="row">
-    <span id="conn" class="state">connecting</span>
-    <span id="updated" class="stamp"></span>
+  <div class="chips" aria-live="polite">
+    <span class="chip"><span id="link_dot" class="dot"></span><span id="link">Connecting</span></span>
+    <span class="chip" id="mode_chip">Mode <b id="mode">—</b></span>
+    <span class="chip">Tracking <b id="trk">—</b></span>
+    <span class="chip" id="park_chip"><b id="parked">—</b></span>
+  </div>
+  <div class="clock num">
+    <span>UTC <b id="utc_now">—</b></span>
+    <span>LST <b id="lst_now">—</b></span>
   </div>
 </header>
 
 <div class="stopbar">
-  <div class="inner">
-    <button id="stop" class="stop">Stop</button>
-    <small>Halts all motion. The space bar does the same.</small>
-  </div>
+  <button id="stop" class="stop">Stop <span>Halts all motion · Space bar</span></button>
 </div>
 
-<main class="layout">
+<main class="console">
 
-  <section class="readout" aria-label="Telescope position">
-    <dl class="coords">
-      <div><dt>Right ascension</dt><dd id="ra">—</dd></div>
-      <div><dt>Declination</dt><dd id="dec">—</dd></div>
-    </dl>
-    <dl class="facts">
-      <div><dt>Altitude</dt><dd id="alt">—</dd></div>
-      <div><dt>Sidereal time</dt><dd id="lst">—</dd></div>
-      <div><dt>Pier side</dt><dd id="pier">—</dd></div>
-      <div><dt>Parking</dt><dd id="park">—</dd></div>
-      <div><dt>Home</dt><dd id="home">—</dd></div>
-      <div><dt>Motion</dt><dd id="slew">—</dd></div>
-      <div><dt>Tracking</dt><dd id="track">—</dd></div>
-      <div><dt>Status letters</dt><dd id="gu" class="mono">—</dd></div>
-      <div><dt>Target RA</dt><dd id="t_now_ra">—</dd></div>
-      <div><dt>Target Dec</dt><dd id="t_now_dec">—</dd></div>
-      <div><dt>Latitude</dt><dd id="lat">—</dd></div>
-      <div><dt>Longitude</dt><dd id="lon">—</dd></div>
-      <div><dt>UTC offset</dt><dd id="utc">—</dd></div>
-    </dl>
-    <p class="note">The pointing hasn't been re-aligned since the 2026-10-23 sync. Check the tube by hand before you use Goto or Sync.</p>
+  <!-- 3D mount and sky chart -->
+  <section class="region view" aria-label="Mount view">
+    <div class="stage">
+      <canvas id="mount3d" aria-label="3D view of the mount in its current position"></canvas>
+      <div class="hud">
+        <span class="mode" id="hud_mode">—</span>
+        <span class="line num" id="hud_altaz">—</span>
+        <span class="line num" id="hud_axis">—</span>
+      </div>
+      <button class="reset" id="view_reset" type="button">Reset view</button>
+    </div>
+    <p class="stage-note">Drag to turn, scroll to zoom. The lit housing is the axis you are moving. Shown from the mount's own readings.</p>
+
+    <figure class="sky">
+      <svg id="sky" viewBox="0 0 900 360" role="img" aria-label="Sky chart: hour angle across, declination up"></svg>
+    </figure>
   </section>
 
-  <div class="controls">
-
-    <section class="block">
-      <h2>Move</h2>
+  <!-- Live controls -->
+  <section class="region ctrl" aria-label="Controls">
+    <div class="group">
+      <p class="cap">Move</p>
       <div class="pad">
-        <span></span><button class="hold" data-hold="n" aria-label="North">N</button><span></span>
-        <button class="hold" data-hold="w" aria-label="West">W</button><span id="center" class="pad-center" aria-hidden="true"></span><button class="hold" data-hold="e" aria-label="East">E</button>
-        <span></span><button class="hold" data-hold="s" aria-label="South">S</button><span></span>
+        <span></span><button class="hold" data-hold="n" aria-label="Move north">N</button><span></span>
+        <button class="hold" data-hold="e" aria-label="Move east">E</button><span class="hub">Hold</span><button class="hold" data-hold="w" aria-label="Move west">W</button>
+        <span></span><button class="hold" data-hold="s" aria-label="Move south">S</button><span></span>
       </div>
-      <p class="hint">Hold a direction to move. Arrow keys work too.</p>
-    </section>
+      <p class="pad-hint">East on the left, as in the sky facing south. Arrow keys work too.</p>
+    </div>
 
-    <section class="block">
-      <h2>Speed</h2>
-      <div class="seg">
-        <button data-file="controlA.txt" data-key="dr" data-value="R0">R0</button>
-        <button data-file="controlA.txt" data-key="dr" data-value="R1">R1</button>
-        <button data-file="controlA.txt" data-key="dr" data-value="R2">R2</button>
-        <button data-file="controlA.txt" data-key="dr" data-value="R5">R5</button>
-        <button data-file="controlA.txt" data-key="dr" data-value="R6">R6</button>
-        <button data-file="controlA.txt" data-key="dr" data-value="R7">R7</button>
-        <button data-file="controlA.txt" data-key="dr" data-value="R8">R8</button>
+    <div class="group">
+      <p class="cap">Move speed</p>
+      <div class="speeds" data-sent-group="speed">
+        <button data-file="controlA.txt" data-key="dr" data-value="R0" title="R0">0.25×</button>
+        <button data-file="controlA.txt" data-key="dr" data-value="R1" title="R1">0.5×</button>
+        <button data-file="controlA.txt" data-key="dr" data-value="R2" title="R2">1×</button>
+        <button data-file="controlA.txt" data-key="dr" data-value="R5" title="R5">4×</button>
+        <button data-file="controlA.txt" data-key="dr" data-value="R6" title="R6">40×</button>
+        <button data-file="controlA.txt" data-key="dr" data-value="R7" title="R7">60×</button>
+        <button data-file="controlA.txt" data-key="dr" data-value="R8" title="R8">Max</button>
       </div>
-    </section>
+    </div>
 
-    <section class="block">
-      <h2>Tracking</h2>
-      <div class="seg">
-        <button data-ctl="trk_on" data-file="controlA.txt" data-key="dr" data-value="T1">On</button>
-        <button data-ctl="trk_off" data-file="controlA.txt" data-key="dr" data-value="T0">Off</button>
+    <div class="group">
+      <p class="cap">Tracking</p>
+      <div class="cols2">
+        <button data-ctl="trk_on" data-radio="trk" data-file="controlA.txt" data-key="dr" data-value="T1">On</button>
+        <button data-ctl="trk_off" data-radio="trk" data-file="controlA.txt" data-key="dr" data-value="T0">Off</button>
       </div>
-      <div class="seg">
+      <div class="row" data-sent-group="rate" style="margin-top:6px">
         <button data-file="controlA.txt" data-key="dr" data-value="Ts">Sidereal</button>
         <button data-file="controlA.txt" data-key="dr" data-value="Tl">Lunar</button>
         <button data-file="controlA.txt" data-key="dr" data-value="Th">Solar</button>
       </div>
-    </section>
+      <div class="row">
+        <button data-file="settingsA.txt" data-key="tk" data-value="-">−0.02 Hz</button>
+        <button data-file="settingsA.txt" data-key="tk" data-value="f">+0.02 Hz</button>
+        <button data-file="settingsA.txt" data-key="tk" data-value="r">Reset rate</button>
+      </div>
+    </div>
 
-    <section class="block">
-      <h2>Park and home</h2>
-      <div class="grid2">
-        <button data-ctl="park" data-file="controlA.txt" data-key="dr" data-value="pk" data-confirm="Park the telescope?">Park</button>
+    <div class="group">
+      <p class="cap">Park and home</p>
+      <div class="cols2">
+        <button data-ctl="park" data-file="controlA.txt" data-key="dr" data-value="pk" data-confirm="Park the telescope? It will move to the park position.">Park</button>
         <button data-ctl="unpark" data-file="controlA.txt" data-key="dr" data-value="pu">Unpark</button>
-        <button data-file="controlA.txt" data-key="dr" data-value="qh" data-confirm="Find home? The telescope will move to the home sensor.">Find home</button>
-        <button data-ctl="c_goto" data-file="controlA.txt" data-key="dr" data-value="qc">Continue goto</button>
-        <button data-file="controlA.txt" data-key="dr" data-value="qr" data-confirm="Set the current position as home?">Set home here</button>
+        <button data-file="controlA.txt" data-key="dr" data-value="qh" data-confirm="Find home? The telescope will move to its home position.">Find home</button>
+        <button data-ctl="c_goto" data-file="controlA.txt" data-key="dr" data-value="qc" title="Continue a goto that paused at home">Continue goto</button>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <details class="block">
-      <summary>Target and goto</summary>
-      <div class="field"><span>Target RA</span><input id="t_ra" type="text" value="00:00:00" inputmode="numeric" aria-label="Target RA, HH:MM:SS"></div>
-      <div class="field"><span>Target Dec</span><input id="t_dec" type="text" value="+00:00:00" inputmode="numeric" aria-label="Target Dec, +DD:MM:SS"></div>
-      <div class="row" style="margin-top:12px">
-        <button id="set_target">Set target</button>
-        <button id="sync">Sync to target</button>
+  <!-- Telemetry -->
+  <section class="region tele" aria-label="Telemetry">
+    <p class="cap region-title">Pointing</p>
+    <div class="tele-cols">
+      <div>
+        <dl class="big">
+          <div><dt class="cap">Right ascension</dt><dd id="ra">—</dd></div>
+          <div><dt class="cap">Declination</dt><dd id="dec">—</dd></div>
+        </dl>
+        <dl class="fields">
+          <div><dt class="cap">Altitude</dt><dd id="alt">—</dd></div>
+          <div><dt class="cap">Azimuth</dt><dd id="az">—</dd></div>
+          <div><dt class="cap">Hour angle</dt><dd id="ha">—</dd></div>
+          <div><dt class="cap">Pier side</dt><dd id="pier">—</dd></div>
+          <div><dt class="cap">Motion</dt><dd id="slew">—</dd></div>
+          <div><dt class="cap">Home</dt><dd id="home">—</dd></div>
+          <div><dt class="cap">Target RA</dt><dd id="t_now_ra">—</dd></div>
+          <div><dt class="cap">Target Dec</dt><dd id="t_now_dec">—</dd></div>
+        </dl>
       </div>
-      <label class="goto-check"><input id="goto_ok" type="checkbox"> Goto enabled. Check the sky and the cable first.</label>
-      <div class="row">
-        <button id="goto">Goto target</button>
-        <button id="home_lx">Go home</button>
-        <button id="set_home_lx">Set home here</button>
+      <div>
+        <dl class="fields">
+          <div><dt class="cap">Max slew</dt><dd id="d_slew">—</dd></div>
+          <div><dt class="cap">Tracking rate</dt><dd id="d_rate">—</dd></div>
+          <div><dt class="cap">Polar align error</dt><dd id="d_pa">—</dd></div>
+          <div><dt class="cap">Meridian flips</dt><dd id="d_flip">—</dd></div>
+          <div><dt class="cap">Workload</dt><dd id="d_load">—</dd></div>
+          <div><dt class="cap">Wi-Fi signal</dt><dd id="d_signal">—</dd></div>
+          <div><dt class="cap">Last error</dt><dd id="d_error">—</dd></div>
+          <div><dt class="cap">Status letters</dt><dd id="gu">—</dd></div>
+          <div><dt class="cap">Latitude</dt><dd id="lat">—</dd></div>
+          <div><dt class="cap">Longitude</dt><dd id="lon">—</dd></div>
+        </dl>
+        <p class="note">Pointing hasn't been re-aligned since the 2026-10-23 syncs. Check the tube by hand before using Goto or Sync.</p>
       </div>
-      <p class="hint">Sync writes the target into the pointing model. It does not use where the tube points.</p>
-    </details>
+    </div>
+  </section>
 
-    <details class="block">
-      <summary>Alignment</summary>
-      <div class="seg">
-        <button data-ctl="alg1" data-file="controlA.txt" data-key="al" data-value="1">1 star</button>
-        <button data-ctl="alg2" data-file="controlA.txt" data-key="al" data-value="3">3 stars</button>
-        <button data-ctl="alg3" data-file="controlA.txt" data-key="al" data-value="9">9 stars</button>
-        <button data-ctl="alga" data-file="controlA.txt" data-key="al" data-value="n">Accept</button>
-      </div>
-      <div class="srow" style="margin-top:14px">
-        <span>Reset (rp=a, not identified)</span>
-        <button data-ctl="rpa" data-file="controlA.txt" data-key="rp" data-value="a" data-confirm="rp=a is not identified. It may reset the alignment model. Continue?">Reset</button>
-      </div>
-    </details>
+  <!-- Secondary panels -->
+  <section class="drawer" aria-label="More controls">
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-goto" aria-controls="p-goto" aria-selected="true">Goto and sync</button>
+      <button role="tab" id="tab-align" aria-controls="p-align" aria-selected="false">Alignment</button>
+      <button role="tab" id="tab-settings" aria-controls="p-settings" aria-selected="false">Settings</button>
+      <button role="tab" id="tab-camera" aria-controls="p-camera" aria-selected="false">Camera</button>
+      <button role="tab" id="tab-mode" aria-controls="p-mode" aria-selected="false">Mount mode</button>
+      <button role="tab" id="tab-limits" aria-controls="p-limits" aria-selected="false">Limits and site</button>
+      <button role="tab" id="tab-log" aria-controls="p-log" aria-selected="false">Log</button>
+    </div>
 
-    <details class="block">
-      <summary>Settings</summary>
-      <div class="srow">
-        <span>Max slew speed</span>
-        <span class="seg">
-          <button data-state-key="sr_f" data-state-value="disabled" data-file="settingsA.txt" data-key="ss" data-value="f">f</button>
-          <button data-state-key="sr_n" data-state-value="disabled" data-file="settingsA.txt" data-key="ss" data-value="n">n</button>
-          <button data-state-key="sr_s" data-state-value="disabled" data-file="settingsA.txt" data-key="ss" data-value="s">s</button>
-          <button data-state-key="sr_vf" data-state-value="disabled" data-file="settingsA.txt" data-key="ss" data-value="vf">vf</button>
-          <button data-state-key="sr_vs" data-state-value="disabled" data-file="settingsA.txt" data-key="ss" data-value="vs">vs</button>
-        </span>
+    <div class="panel" id="p-goto" role="tabpanel" aria-labelledby="tab-goto">
+      <div class="panel-grid">
+        <div>
+          <div class="item"><span class="what">Target RA</span><input id="t_ra" type="text" value="00:00:00" inputmode="numeric" aria-label="Target RA, HH:MM:SS"></div>
+          <div class="item"><span class="what">Target Dec</span><input id="t_dec" type="text" value="+00:00:00" inputmode="numeric" aria-label="Target Dec, +DD:MM:SS"></div>
+          <div class="item">
+            <span class="what">Send the target to the mount</span>
+            <button id="set_target">Set target</button>
+            <p class="why">RA as HH:MM:SS, Dec as +DD:MM:SS. Nothing moves.</p>
+          </div>
+        </div>
+        <div>
+          <div class="item">
+            <label class="check"><input id="goto_ok" type="checkbox"> Allow goto</label>
+            <button id="goto">Goto target</button>
+            <p class="why">Slews to the target. Check the sky and the cable first.</p>
+          </div>
+          <div class="item">
+            <span class="what">Sync to target</span>
+            <button id="sync" class="warn">Sync</button>
+            <p class="why">Tells the mount it is pointing at the target. Only use it with the target centred in the eyepiece or camera.</p>
+          </div>
+          <div class="item">
+            <span class="what">Home</span>
+            <span class="row"><button id="home_lx">Go home</button><button id="set_home_lx" class="warn">Set home here</button></span>
+            <p class="why">Set home here tells the mount its current position is home. Only use it with the tube at the pole and the counterweight side down.</p>
+          </div>
+        </div>
       </div>
-      <div class="srow">
-        <span>Buzzer</span>
-        <span class="seg">
-          <button data-state-key="bzr_on" data-state-value="disabled" data-file="settingsA.txt" data-key="ab" data-value="on">On</button>
-          <button data-state-key="bzr_off" data-state-value="disabled" data-file="settingsA.txt" data-key="ab" data-value="off">Off</button>
-        </span>
-      </div>
-      <div class="srow">
-        <span>ma, no status line seen</span>
-        <span class="seg">
-          <button data-file="settingsA.txt" data-key="ma" data-value="on">on</button>
-          <button data-file="settingsA.txt" data-key="ma" data-value="off">off</button>
-        </span>
-      </div>
-      <div class="srow">
-        <span>mp, no status line seen</span>
-        <span class="seg">
-          <button data-file="settingsA.txt" data-key="mp" data-value="on">on</button>
-          <button data-file="settingsA.txt" data-key="mp" data-value="off">off</button>
-        </span>
-      </div>
-      <div class="srow">
-        <span>rr, no status line seen</span>
-        <span class="seg">
-          <button data-file="settingsA.txt" data-key="rr" data-value="on">on</button>
-          <button data-file="settingsA.txt" data-key="rr" data-value="off">off</button>
-          <button data-file="settingsA.txt" data-key="rr" data-value="don">don</button>
-          <button data-file="settingsA.txt" data-key="rr" data-value="doff">doff</button>
-          <button data-file="settingsA.txt" data-key="rr" data-value="otk">otk</button>
-        </span>
-      </div>
-      <div class="srow">
-        <span>pk, no status line seen</span>
-        <span class="seg"><button data-file="settingsA.txt" data-key="pk" data-value="s">s</button></span>
-      </div>
-      <div class="srow">
-        <span>tk, no status line seen</span>
-        <span class="seg">
-          <button data-file="settingsA.txt" data-key="tk" data-value="-">-</button>
-          <button data-file="settingsA.txt" data-key="tk" data-value="f">f</button>
-          <button data-file="settingsA.txt" data-key="tk" data-value="r">r</button>
-        </span>
-      </div>
-    </details>
+    </div>
 
-    <details class="block">
-      <summary>Auxiliary</summary>
-      <div class="srow">
-        <span>Switch 4</span>
-        <span class="seg">
-          <button data-state-src="auxiliary" data-state-key="sw4_on" data-state-value="disabled" data-file="auxiliaryA.txt" data-key="x4v1" data-value="1" data-confirm="Turn switch 4 on?">On</button>
-          <button data-state-src="auxiliary" data-state-key="sw4_off" data-state-value="disabled" data-file="auxiliaryA.txt" data-key="x4v1" data-value="0">Off</button>
-        </span>
+    <div class="panel" id="p-align" role="tabpanel" aria-labelledby="tab-align" hidden>
+      <div class="panel-grid">
+        <div>
+          <div class="item">
+            <span class="what">Star alignment</span>
+            <span class="row">
+              <button data-ctl="alg1" data-file="controlA.txt" data-key="al" data-value="1">1 star</button>
+              <button data-ctl="alg2" data-file="controlA.txt" data-key="al" data-value="3">3 stars</button>
+              <button data-ctl="alg3" data-file="controlA.txt" data-key="al" data-value="9">9 stars</button>
+            </span>
+            <p class="why">Starts an alignment. The mount enables these when an alignment can start.</p>
+          </div>
+          <div class="item">
+            <span class="what">Accept star</span>
+            <button data-ctl="alga" data-file="controlA.txt" data-key="al" data-value="n">Accept</button>
+            <p class="why">Records the current star once it is centred.</p>
+          </div>
+        </div>
+        <div>
+          <div class="item">
+            <span class="what">Refine polar alignment</span>
+            <button data-ctl="rpa" class="warn" data-file="controlA.txt" data-key="rp" data-value="a" data-confirm="Refine PA? It uses the alignment model to correct the polar alignment. Its exact behaviour on this firmware isn't verified.">Refine PA</button>
+            <p class="why">Available after a multi-star alignment.</p>
+          </div>
+        </div>
       </div>
-      <div class="srow">
-        <span>x1v4 <em data-show="auxiliary:x1v4">—</em></span>
-        <span class="seg">
-          <button data-file="auxiliaryA.txt" data-key="x1v4" data-value="0">0</button>
-          <button data-file="auxiliaryA.txt" data-key="x1v4" data-value="1">1</button>
-        </span>
-      </div>
-      <div class="srow">
-        <span>x1v1 <em data-show="auxiliary:x1v1">—</em>, no visible effect</span>
-        <span class="seg">
-          <button data-file="auxiliaryA.txt" data-key="x1v1" data-value="0">0</button>
-          <button data-file="auxiliaryA.txt" data-key="x1v1" data-value="1">1</button>
-        </span>
-      </div>
-      <div class="field">
-        <span>x1v2 <em data-show="auxiliary:x1v2">—</em></span>
-        <span class="row"><input class="narrow" type="number" step="0.001" min="0" max="1" data-aux-input="x1v2" aria-label="x1v2 value"><button data-aux-set="x1v2">Set</button></span>
-      </div>
-      <div class="field">
-        <span>x1v3 <em data-show="auxiliary:x1v3">—</em></span>
-        <span class="row"><input class="narrow" type="number" step="0.001" min="0" max="1" data-aux-input="x1v3" aria-label="x1v3 value"><button data-aux-set="x1v3">Set</button></span>
-      </div>
-    </details>
+    </div>
 
-    <details class="block">
-      <summary>Configuration</summary>
-      <div class="field"><span>Backlash, axis 1 <em data-cfg-show="b1">—</em></span><span class="row"><input class="narrow" type="number" min="0" max="3600" data-cfg-input="b1" aria-label="Backlash axis 1"><button data-cfg-set="b1">Set</button></span></div>
-      <div class="field"><span>Backlash, axis 2 <em data-cfg-show="b2">—</em></span><span class="row"><input class="narrow" type="number" min="0" max="3600" data-cfg-input="b2" aria-label="Backlash axis 2"><button data-cfg-set="b2">Set</button></span></div>
-      <div class="field"><span>Meridian limit, east <em data-cfg-show="el">—</em></span><span class="row"><input class="narrow" type="number" min="-270" max="270" data-cfg-input="el" aria-label="Meridian limit east"><button data-cfg-set="el">Set</button></span></div>
-      <div class="field"><span>Meridian limit, west <em data-cfg-show="wl">—</em></span><span class="row"><input class="narrow" type="number" min="-270" max="270" data-cfg-input="wl" aria-label="Meridian limit west"><button data-cfg-set="wl">Set</button></span></div>
-      <div class="field"><span>Horizon limit <em data-cfg-show="hl">—</em></span><span class="row"><input class="narrow" type="number" min="-30" max="30" data-cfg-input="hl" aria-label="Horizon limit"><button data-cfg-set="hl">Set</button></span></div>
-      <div class="field"><span>Overhead limit <em data-cfg-show="ol">—</em></span><span class="row"><input class="narrow" type="number" min="60" max="90" data-cfg-input="ol" aria-label="Overhead limit"><button data-cfg-set="ol">Set</button></span></div>
-      <p class="hint">Site, read only: longitude <em data-cfg-show="g1">—</em>° <em data-cfg-show="g2">—</em>′ <em data-cfg-show="g3">—</em>″ (W is +), latitude <em data-cfg-show="t1">—</em>° <em data-cfg-show="t2">—</em>′, UTC offset <em data-cfg-show="u1">—</em>.</p>
-    </details>
-
-    <section class="block">
-      <h2>Clock</h2>
-      <div class="row">
-        <button id="clock">Set mount clock to this computer</button>
+    <div class="panel" id="p-settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
+      <div class="panel-grid">
+        <div>
+          <div class="item" data-needs="sr_n">
+            <span class="what">Maximum slew speed</span>
+            <span class="row">
+              <button data-ctl="sr_vs" data-radio="sr" data-file="settingsA.txt" data-key="ss" data-value="vs">0.5×</button>
+              <button data-ctl="sr_s" data-radio="sr" data-file="settingsA.txt" data-key="ss" data-value="s">0.75×</button>
+              <button data-ctl="sr_n" data-radio="sr" data-file="settingsA.txt" data-key="ss" data-value="n">1×</button>
+              <button data-ctl="sr_f" data-radio="sr" data-file="settingsA.txt" data-key="ss" data-value="f">1.5×</button>
+              <button data-ctl="sr_vf" data-radio="sr" data-file="settingsA.txt" data-key="ss" data-value="vf">2×</button>
+            </span>
+            <p class="why">Very slow to very fast. Now <span class="now" id="slew_now">—</span>.</p>
+          </div>
+          <div class="item" data-needs="ot_off">
+            <span class="what">Compensated tracking</span>
+            <span class="stack">
+              <span class="row">
+                <button data-ctl="ot_on" data-radio="ot" data-file="settingsA.txt" data-key="rr" data-value="otk">Full</button>
+                <button data-ctl="ot_ref" data-radio="ot" data-file="settingsA.txt" data-key="rr" data-value="on">Refraction</button>
+                <button data-ctl="ot_off" data-radio="ot" data-file="settingsA.txt" data-key="rr" data-value="off">Off</button>
+              </span>
+              <span class="row">
+                <button data-ctl="ot_dul" data-radio="ota" data-file="settingsA.txt" data-key="rr" data-value="don">Dual axis</button>
+                <button data-ctl="ot_sgl" data-radio="ota" data-file="settingsA.txt" data-key="rr" data-value="doff">Single axis</button>
+              </span>
+            </span>
+            <p class="why">Corrects the tracking rate for the pointing model and refraction.</p>
+            <p class="missing-note">The mount isn't reporting this setting. It hides it in Alt-Az mode.</p>
+          </div>
+        </div>
+        <div>
+          <div class="item" data-needs="bzr_on">
+            <span class="what">Goto alert buzzer</span>
+            <span class="row">
+              <button data-ctl="bzr_on" data-radio="bzr" data-file="settingsA.txt" data-key="ab" data-value="on">On</button>
+              <button data-ctl="bzr_off" data-radio="bzr" data-file="settingsA.txt" data-key="ab" data-value="off">Off</button>
+            </span>
+          </div>
+          <div class="item" data-needs="mfa_on">
+            <span class="what">Automatic meridian flip at limit</span>
+            <span class="row">
+              <button data-ctl="mfa_on" data-radio="mfa" data-file="settingsA.txt" data-key="ma" data-value="on">On</button>
+              <button data-ctl="mfa_off" data-radio="mfa" data-file="settingsA.txt" data-key="ma" data-value="off">Off</button>
+            </span>
+            <p class="missing-note">The mount isn't reporting this setting. It hides it in Alt-Az mode.</p>
+          </div>
+          <div class="item" data-needs="mfp_on">
+            <span class="what">Meridian flip, pause at home</span>
+            <span class="row">
+              <button data-ctl="mfp_on" data-radio="mfp" data-file="settingsA.txt" data-key="mp" data-value="on">On</button>
+              <button data-ctl="mfp_off" data-radio="mfp" data-file="settingsA.txt" data-key="mp" data-value="off">Off</button>
+            </span>
+            <p class="missing-note">The mount isn't reporting this setting. It hides it in Alt-Az mode.</p>
+          </div>
+          <div class="item">
+            <span class="what">Park position</span>
+            <button class="warn" data-file="settingsA.txt" data-key="pk" data-value="s" data-confirm="Make the current position the park position?">Set park here</button>
+            <p class="why">Park will return the telescope to wherever it is now.</p>
+          </div>
+        </div>
       </div>
-    </section>
+    </div>
 
-    <section class="block">
-      <h2>Log</h2>
+    <div class="panel" id="p-camera" role="tabpanel" aria-labelledby="tab-camera" hidden>
+      <div class="panel-grid">
+        <div>
+          <div class="item">
+            <span class="what">Intervalometer on the Camera port</span>
+            <span class="row">
+              <button data-file="auxiliaryA.txt" data-key="x1v1" data-value="1">Start</button>
+              <button data-file="auxiliaryA.txt" data-key="x1v1" data-value="0">Stop</button>
+            </span>
+            <p class="why">Fires the camera through the mount's Camera jack. Status <span class="now" data-show="auxiliary:x1v1">—</span>.</p>
+          </div>
+        </div>
+        <div>
+          <div class="item">
+            <span class="what">Count <span class="now" data-show="auxiliary:x1v4">—</span></span>
+            <input type="range" min="1" max="255" value="1" data-slider="x1v4" aria-label="Count">
+          </div>
+          <div class="item">
+            <span class="what">Exposure <span class="now" data-show="auxiliary:x1v2">—</span> s</span>
+            <input type="range" min="0" max="255" value="0" data-slider="x1v2" aria-label="Exposure">
+          </div>
+          <div class="item">
+            <span class="what">Delay <span class="now" data-show="auxiliary:x1v3">—</span> s</span>
+            <input type="range" min="10" max="255" value="10" data-slider="x1v3" aria-label="Delay">
+            <p class="why">Sliders send their position when released; the mount works out the time and reports it here.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="p-mode" role="tabpanel" aria-labelledby="tab-mode" hidden>
+      <div class="item" data-needs="sw4_on">
+        <span class="what">Mount mode</span>
+        <span class="row">
+          <button data-ctl="sw4_off" data-radio="sw4" data-file="auxiliaryA.txt" data-key="x4v1" data-value="0" data-confirm="Switch to equatorial mode? Re-align afterwards.">Equatorial</button>
+          <button data-ctl="sw4_on" data-radio="sw4" data-file="auxiliaryA.txt" data-key="x4v1" data-value="1" data-confirm="Switch to Alt-Az mode? The mount moves on altitude and azimuth instead of RA and Dec, and meridian settings disappear. Re-align afterwards.">Alt-Az</button>
+        </span>
+        <p class="why">The stock page calls this ALTAZM. Equatorial needs the mount polar-aligned on its wedge; Alt-Az needs it level.</p>
+      </div>
+    </div>
+
+    <div class="panel" id="p-limits" role="tabpanel" aria-labelledby="tab-limits" hidden>
+      <div class="panel-grid">
+        <div>
+          <div class="item"><span class="what">Horizon limit <span class="now" data-cfg-show="hl">—</span>°</span><span class="row"><input type="number" min="-30" max="30" data-cfg-input="hl" aria-label="Horizon limit"><button data-cfg-set="hl">Set</button></span></div>
+          <div class="item"><span class="what">Overhead limit <span class="now" data-cfg-show="ol">—</span>°</span><span class="row"><input type="number" min="60" max="90" data-cfg-input="ol" aria-label="Overhead limit"><button data-cfg-set="ol">Set</button></span></div>
+          <div class="item" data-cfg-needs="el"><span class="what">Past meridian, east <span class="now" data-cfg-show="el">—</span>°</span><span class="row"><input type="number" min="-270" max="270" data-cfg-input="el" aria-label="Past meridian east"><button data-cfg-set="el">Set</button></span><p class="missing-note">Not on the mount's Config page right now. It hides it in Alt-Az mode.</p></div>
+          <div class="item" data-cfg-needs="wl"><span class="what">Past meridian, west <span class="now" data-cfg-show="wl">—</span>°</span><span class="row"><input type="number" min="-270" max="270" data-cfg-input="wl" aria-label="Past meridian west"><button data-cfg-set="wl">Set</button></span><p class="missing-note">Not on the mount's Config page right now. It hides it in Alt-Az mode.</p></div>
+        </div>
+        <div>
+          <div class="item"><span class="what">Backlash, axis 1 <span class="now" data-cfg-show="b1">—</span>″</span><span class="row"><input type="number" min="0" max="3600" data-cfg-input="b1" aria-label="Backlash axis 1"><button data-cfg-set="b1">Set</button></span></div>
+          <div class="item"><span class="what">Backlash, axis 2 <span class="now" data-cfg-show="b2">—</span>″</span><span class="row"><input type="number" min="0" max="3600" data-cfg-input="b2" aria-label="Backlash axis 2"><button data-cfg-set="b2">Set</button></span></div>
+          <div class="item">
+            <span class="what">Site</span>
+            <span class="now" id="site_text">—</span>
+            <p class="why">Read only here. Change it on the mount's Config page if the site moves.</p>
+          </div>
+          <div class="item">
+            <span class="what">Mount clock</span>
+            <button id="clock">Set to this computer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="p-log" role="tabpanel" aria-labelledby="tab-log" hidden>
       <ul id="log"></ul>
-    </section>
-
-  </div>
+    </div>
+  </section>
 </main>
 
+<script src="mount3d.js"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const setText = (id, text) => { $(id).textContent = text ?? '—'; };
@@ -414,7 +522,7 @@ function logLine(text, ok = true) {
   li.textContent = new Date().toLocaleTimeString() + '  ' + text;
   if (!ok) li.className = 'bad';
   $('log').prepend(li);
-  while ($('log').children.length > 80) $('log').lastChild.remove();
+  while ($('log').children.length > 120) $('log').lastChild.remove();
 }
 
 async function api(path, body) {
@@ -426,159 +534,466 @@ async function api(path, body) {
 }
 
 async function mount(file, key, value, label) {
-  const res = await api('/api/mount', { file, key, value });
-  logLine(`${label || key + '=' + value}: ${res.ok ? 'HTTP ' + res.code : 'FAILED: ' + res.error}`, res.ok);
-  return res;
+  try {
+    const res = await api('/api/mount', { file, key, value });
+    logLine(`${label || key + '=' + value}: ${res.ok ? 'sent' : 'FAILED: ' + res.error}`, res.ok);
+    return res;
+  } catch (err) {
+    logLine(`${label || key + '=' + value}: FAILED: the UI server did not answer`, false);
+    return { ok: false };
+  }
 }
 
 async function lx(cmd, label) {
-  const res = await api('/api/lx200', { cmd });
-  const accepted = res.ok && res.reply !== '0';
-  logLine(`${label || ':' + cmd + '#'}: ${res.ok ? (res.reply ?? 'no reply') : 'FAILED: ' + res.error}`, accepted);
-  return res;
+  try {
+    const res = await api('/api/lx200', { cmd });
+    const accepted = res.ok && res.reply !== '0';
+    logLine(`${label || ':' + cmd + '#'}: ${res.ok ? (res.reply ?? 'sent, no reply') : 'FAILED: ' + res.error}`, accepted);
+    return res;
+  } catch (err) {
+    logLine(`${label || ':' + cmd + '#'}: FAILED: the UI server did not answer`, false);
+    return { ok: false };
+  }
+}
+
+// ---- Motion ----
+// Start and stop requests go out one at a time, in order. Sent together, a quick tap's stop
+// could reach the mount before its start and leave the telescope moving.
+const moving = new Set();     // directions currently held, from buttons or keys
+const keysDown = new Set();
+let motionChain = Promise.resolve();
+let motionEpoch = 0;          // bumped by Stop, so queued starts are dropped
+let motionInFlight = 0;
+
+function queueMotion(dir, on) {
+  const epoch = motionEpoch;
+  motionChain = motionChain.then(async () => {
+    if (on && epoch !== motionEpoch) return;
+    motionInFlight++;
+    try {
+      await mount('controlA.txt', 'dr', dir + (on ? '1' : '0'), (on ? 'Move ' : 'Stop ') + dir.toUpperCase());
+    } finally {
+      motionInFlight--;
+    }
+  });
+}
+
+function motionChanged() {
+  document.querySelectorAll('[data-hold]').forEach((b) => b.classList.toggle('held', moving.has(b.dataset.hold)));
+  drawSky();
+  if (view3d) view3d.setMoving(moving);
+  updateHudAxis();
+}
+
+function press(dir) {
+  if (moving.has(dir)) return;
+  moving.add(dir);
+  motionChanged();
+  queueMotion(dir, true);
+}
+
+function release(dir) {
+  if (!moving.has(dir)) return;
+  moving.delete(dir);
+  motionChanged();
+  queueMotion(dir, false);
+}
+
+function releaseAll() {
+  keysDown.clear();
+  for (const dir of [...moving]) release(dir);
 }
 
 function emergencyStop() {
-  return Promise.all([mount('controlA.txt', 'dr', 'qq', 'STOP dr=qq'), lx('Q', 'STOP :Q#')]);
+  motionEpoch++;
+  const startWasInFlight = motionInFlight > 0;
+  moving.clear();
+  keysDown.clear();
+  motionChanged();
+  const now = Promise.all([mount('controlA.txt', 'dr', 'qq', 'STOP (dr=qq)'), lx('Q', 'STOP (:Q#)')]);
+  // A start already on its way can land after this stop, so stop once more when it has gone.
+  if (startWasInFlight) motionChain = motionChain.then(() => mount('controlA.txt', 'dr', 'qq', 'STOP again after a queued move'));
+  return now;
 }
 $('stop').addEventListener('click', emergencyStop);
 
-// Press-and-hold motion: start on press, stop on release.
+// Press-and-hold buttons. Each button only releases what it pressed.
 document.querySelectorAll('[data-hold]').forEach((btn) => {
   const dir = btn.dataset.hold;
   let down = false;
-  btn.addEventListener('pointerdown', (e) => {
-    e.preventDefault();
-    if (!down) { down = true; mount('controlA.txt', 'dr', dir + '1', 'move ' + dir); }
-  });
-  const up = () => { if (down) { down = false; mount('controlA.txt', 'dr', dir + '0', 'stop ' + dir); } };
+  btn.addEventListener('pointerdown', (e) => { e.preventDefault(); down = true; press(dir); });
+  const up = () => { if (down) { down = false; release(dir); } };
   ['pointerup', 'pointerleave', 'pointercancel'].forEach((t) => btn.addEventListener(t, up));
 });
 
-// Arrow keys move, space stops (ignored while typing in a field).
-const KEYDIR = { ArrowUp: 'n', ArrowDown: 's', ArrowRight: 'e', ArrowLeft: 'w' };
-const keysDown = new Set();
+// Arrow keys: up north, down south, left east, right west (the sky as seen facing south).
+const KEYDIR = { ArrowUp: 'n', ArrowDown: 's', ArrowLeft: 'e', ArrowRight: 'w' };
 window.addEventListener('keydown', (e) => {
-  if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+  if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || e.target.getAttribute('role') === 'tab') return;
   if (e.code === 'Space') { e.preventDefault(); emergencyStop(); return; }
   const dir = KEYDIR[e.key];
   if (dir && !e.repeat && !keysDown.has(dir)) {
     e.preventDefault();
     keysDown.add(dir);
-    mount('controlA.txt', 'dr', dir + '1', 'move ' + dir);
+    press(dir);
   }
 });
 window.addEventListener('keyup', (e) => {
   const dir = KEYDIR[e.key];
   if (dir && keysDown.has(dir)) {
     keysDown.delete(dir);
-    mount('controlA.txt', 'dr', dir + '0', 'stop ' + dir);
+    release(dir);
   }
 });
+// If the page loses focus mid-hold, the release never arrives. Let go of everything.
+window.addEventListener('blur', releaseAll);
+document.addEventListener('visibilitychange', () => { if (document.hidden) releaseAll(); });
 
-// Plain buttons: data-file/data-key/data-value, optional data-confirm.
-document.querySelectorAll('[data-file]').forEach((btn) => btn.addEventListener('click', () => {
+// ---- Plain commands ----
+// data-file/data-key/data-value, optional data-confirm. Groups without a reading mark the last one sent.
+document.querySelectorAll('[data-file]').forEach((btn) => btn.addEventListener('click', async () => {
   if (btn.dataset.confirm && !confirm(btn.dataset.confirm)) return;
-  mount(btn.dataset.file, btn.dataset.key, btn.dataset.value, btn.textContent.trim());
+  const res = await mount(btn.dataset.file, btn.dataset.key, btn.dataset.value, btn.textContent.trim());
+  const group = btn.closest('[data-sent-group]');
+  if (group && res.ok) {
+    group.querySelectorAll('button').forEach((b) => b.classList.toggle('sent', b === btn));
+    btn.title = (btn.title ? btn.title + ' · ' : '') + 'last sent from this page';
+  }
 }));
 
-// Target, goto, sync, home.
 $('set_target').addEventListener('click', async () => {
   const ra = $('t_ra').value.trim();
   const dec = $('t_dec').value.trim();
   if (!/^\d{2}:\d{2}:\d{2}$/.test(ra) || !/^[+-]\d{2}:\d{2}:\d{2}$/.test(dec)) {
-    logLine('Target format: RA HH:MM:SS and Dec +DD:MM:SS', false);
+    logLine('Target not sent: use RA HH:MM:SS and Dec +DD:MM:SS', false);
+    showTab('log');
     return;
   }
-  await lx('Sr' + ra, 'set RA ' + ra);
-  await lx('Sd' + dec, 'set Dec ' + dec);
+  await lx('Sr' + ra, 'Target RA ' + ra);
+  await lx('Sd' + dec, 'Target Dec ' + dec);
 });
 $('goto').addEventListener('click', () => {
-  if (!$('goto_ok').checked) { logLine('Tick "Goto enabled" first', false); return; }
-  if (confirm('Goto the target? Check the sky and the cable first.')) lx('MS', 'goto target');
+  if (!$('goto_ok').checked) { logLine('Goto not sent: tick "Allow goto" first', false); return; }
+  if (confirm('Goto the target? The telescope will slew.')) lx('MS', 'Goto target');
 });
 $('sync').addEventListener('click', () => {
-  if (confirm('Sync the mount to the TARGET? This rewrites the pointing model. It does not use where the tube points.')) {
-    lx('CS', 'sync to target');
+  if (confirm('Sync to the target? The mount will take the target as where it now points. This rewrites the pointing model.')) {
+    lx('CS', 'Sync to target');
   }
 });
 $('home_lx').addEventListener('click', () => {
-  if (confirm('Go to home? The telescope will move.')) lx('hC', 'go home');
+  if (confirm('Go home? The telescope will move.')) lx('hC', 'Go home');
 });
 $('set_home_lx').addEventListener('click', () => {
-  if (confirm('Set home at the current position?')) lx('hF', 'set home here');
+  if (confirm('Set home here? Only with the tube at the pole and the counterweight side down.')) lx('hF', 'Set home here');
 });
 
-// Config and aux writes take the value from the input next to them.
+// Limits: the value comes from the input next to the Set button.
 document.querySelectorAll('[data-cfg-set]').forEach((btn) => btn.addEventListener('click', async () => {
   const key = btn.dataset.cfgSet;
-  const value = document.querySelector(`[data-cfg-input="${key}"]`).value;
+  const value = document.querySelector(`[data-cfg-input="${key}"]`).value.trim();
   if (value === '') return;
-  if (confirm(`Set ${key} to ${value}?`)) {
+  if (confirm(`Change ${btn.closest('.item').querySelector('.what').firstChild.textContent.trim()} to ${value}?`)) {
     const res = await mount('configurationA.txt', key, value, `${key}=${value}`);
     if (res.ok) loadConfig();
   }
 }));
-document.querySelectorAll('[data-aux-set]').forEach((btn) => btn.addEventListener('click', () => {
-  const key = btn.dataset.auxSet;
-  const value = document.querySelector(`[data-aux-input="${key}"]`).value;
-  if (value !== '') mount('auxiliaryA.txt', key, value, `${key}=${value}`);
+
+// Intervalometer sliders send their position on release, like the stock page.
+document.querySelectorAll('[data-slider]').forEach((sl) => sl.addEventListener('change', () => {
+  mount('auxiliaryA.txt', sl.dataset.slider, sl.value, `${sl.getAttribute('aria-label')} slider ${sl.value}`);
 }));
+
 $('clock').addEventListener('click', async () => {
-  const res = await api('/api/clock', {});
-  logLine('set clock: ' + (res.ok ? 'HTTP ' + res.code : 'FAILED: ' + res.error), res.ok);
+  try {
+    const res = await api('/api/clock', {});
+    logLine('Mount clock set: ' + (res.ok ? 'sent' : 'FAILED: ' + res.error), res.ok);
+  } catch (err) {
+    logLine('Mount clock: FAILED: the UI server did not answer', false);
+  }
 });
 
-// Status: buttons follow the stock page's enabled/disabled states.
-function render(s) {
-  const conn = $('conn');
-  conn.textContent = s.online ? 'online' : 'offline';
-  conn.className = 'state ' + (s.online ? 'on' : 'off');
-  setText('updated', 'updated ' + s.time);
+// ---- Tabs ----
+const TABS = ['goto', 'align', 'settings', 'camera', 'mode', 'limits', 'log'];
+function showTab(name) {
+  for (const t of TABS) {
+    const on = t === name;
+    $('tab-' + t).setAttribute('aria-selected', String(on));
+    $('tab-' + t).tabIndex = on ? 0 : -1;
+    $('p-' + t).hidden = !on;
+  }
+  try { localStorage.setItem('umi-tab', name); } catch (err) { /* private mode: fine */ }
+}
+TABS.forEach((t, i) => {
+  $('tab-' + t).addEventListener('click', () => showTab(t));
+  $('tab-' + t).addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    const next = TABS[(i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length];
+    showTab(next);
+    $('tab-' + next).focus();
+  });
+});
+try { const saved = localStorage.getItem('umi-tab'); if (TABS.includes(saved)) showTab(saved); } catch (err) { /* ignore */ }
 
-  setText('ra', s.position.ra);
-  setText('dec', s.position.dec);
-  setText('alt', s.position.alt);
-  setText('lst', s.position.lst);
-  setText('pier', s.position.pier);
-  setText('t_now_ra', s.target.ra);
-  setText('t_now_dec', s.target.dec);
-  setText('lat', s.site.lat);
-  setText('lon', s.site.lon);
-  setText('utc', s.site.utc_offset);
+// ---- Readings ----
+// Mount readings are strings: RA "HH:MM:SS", Dec "+DD*MM:SS", LST "HH:MM:SS".
+function hoursOf(text) {
+  const m = /^(\d+):(\d+)(?::(\d+))?/.exec(text || '');
+  return m ? (+m[1]) + (+m[2]) / 60 + (+(m[3] || 0)) / 3600 : null;
+}
+function degOf(text) {
+  const m = /^([+-]?)(\d+)\*(\d+)(?::(\d+))?/.exec(text || '');
+  if (!m) return null;
+  const v = (+m[2]) + (+m[3]) / 60 + (+(m[4] || 0)) / 3600;
+  return m[1] === '-' ? -v : v;
+}
+const wrapHours = (h) => ((h + 12) % 24 + 24) % 24 - 12;  // -12 .. +12
+const fmtDeg = (v, digits = 1) => (v < 0 ? '−' : '') + Math.abs(v).toFixed(digits) + '°';
+function fmtHA(ha) {
+  const sign = ha < 0 ? '−' : '+';
+  const minutes = Math.round(Math.abs(ha) * 60);
+  return `${sign}${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`;
+}
+function fmtDec(dec) {
+  const sign = dec < 0 ? '−' : '+';
+  const total = Math.round(Math.abs(dec) * 3600);
+  return `${sign}${Math.floor(total / 3600)}°${String(Math.floor((total % 3600) / 60)).padStart(2, '0')}′`;
+}
+// The mount writes degrees as "+89*36:40"; show them with degree and minute marks.
+const prettyDec = (text) => (text
+  ? text.replace('*', '°').replace(/°(\d+):(\d+)$/, '°$1′$2″').replace(/°(\d+)$/, '°$1′').replace(/^-/, '−')
+  : null);
 
-  const st = s.status;
-  setText('park', st.parked === null ? null : st.parked ? 'Parked' : 'Not parked');
-  setText('home', st.at_home === null ? null : st.at_home ? 'At home' : 'Not at home');
-  setText('slew', st.slewing === null ? null : st.slewing ? 'Moving' : 'Idle');
-  setText('gu', st.raw);
-  setText('track', s.control.trk_on === 'disabled' ? 'On' : s.control.trk_off === 'disabled' ? 'Off' : null);
+// ---- 3D view ----
+let view3d = null;
+try {
+  view3d = new MountView($('mount3d'));
+  view3d.render();
+  if (window.ResizeObserver) new ResizeObserver(() => view3d.render()).observe($('mount3d'));
+  $('view_reset').addEventListener('click', () => view3d.resetView());
+} catch (err) {
+  logLine('3D view unavailable: ' + err.message, false);
+}
 
+let mountMode = null;     // 'eq' or 'altaz', from the stock ALTAZM switch
+function updateHudAxis() {
+  const axis = mountMode === 'altaz' ? { ew: 'Azimuth axis', ns: 'Altitude axis' } : { ew: 'RA axis', ns: 'Dec axis' };
+  const moves = [];
+  if (moving.has('e') || moving.has('w')) moves.push(axis.ew);
+  if (moving.has('n') || moving.has('s')) moves.push(axis.ns);
+  setText('hud_axis', moves.length ? 'Moving ' + moves.join(' and ') : 'Idle');
+}
+
+// ---- Sky chart: hour angle across (east on the left), declination up ----
+const SVGNS = 'http://www.w3.org/2000/svg';
+const PLOT = { x0: 70, x1: 880, y0: 30, y1: 290, haMax: 6, decMin: -20, decMax: 90 };
+const NEAR_POLE = 85;  // above this, hour angle hardly changes where the tube points
+const trail = [];
+let skyState = null;
+let skyTarget = null;
+
+function el(name, attrs = {}, parent = null, text = null) {
+  const node = document.createElementNS(SVGNS, name);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  if (text !== null) node.textContent = text;
+  if (parent) parent.appendChild(node);
+  return node;
+}
+
+function skyXY(ha, dec) {
+  const hx = Math.max(-PLOT.haMax, Math.min(PLOT.haMax, ha));
+  const dy = Math.max(PLOT.decMin, Math.min(PLOT.decMax, dec));
+  const x = PLOT.x0 + ((hx + PLOT.haMax) / (2 * PLOT.haMax)) * (PLOT.x1 - PLOT.x0);
+  const y = PLOT.y0 + ((PLOT.decMax - dy) / (PLOT.decMax - PLOT.decMin)) * (PLOT.y1 - PLOT.y0);
+  return [x, y];
+}
+
+const svg = $('sky');
+const gridG = el('g', {}, svg);
+const trailG = el('g', {}, svg);
+const targetG = el('g', {}, svg);
+const dotG = el('g', {}, svg);
+const arrowG = el('g', {}, svg);
+const labelG = el('g', {}, svg);
+
+for (let h = -PLOT.haMax; h <= PLOT.haMax; h++) {
+  const [x] = skyXY(h, 0);
+  el('line', { x1: x, y1: PLOT.y0, x2: x, y2: PLOT.y1, class: h === 0 ? 'meridian' : 'grid' }, gridG);
+  if (h % 2 === 0) el('text', { x, y: PLOT.y1 + 22, 'text-anchor': 'middle' }, labelG, h === 0 ? '0h' : (h > 0 ? '+' + h + 'h' : '−' + -h + 'h'));
+}
+for (const d of [0, 30, 60, 90]) {
+  const [, y] = skyXY(0, d);
+  el('line', { x1: PLOT.x0, y1: y, x2: PLOT.x1, y2: y, class: d === 90 ? 'pole' : 'grid' }, gridG);
+  el('text', { x: PLOT.x0 - 10, y: y + 4, 'text-anchor': 'end' }, labelG, (d > 0 ? '+' : '') + d + '°');
+}
+el('rect', { x: PLOT.x0, y: PLOT.y0, width: PLOT.x1 - PLOT.x0, height: PLOT.y1 - PLOT.y0, class: 'frame' }, gridG);
+el('text', { x: PLOT.x0 + 8, y: PLOT.y0 + 18 }, labelG, 'Celestial pole');
+el('text', { x: skyXY(0, 0)[0] + 6, y: PLOT.y0 + 18 }, labelG, 'Meridian');
+el('text', { x: PLOT.x0, y: PLOT.y1 + 48 }, labelG, 'East');
+el('text', { x: PLOT.x1, y: PLOT.y1 + 48, 'text-anchor': 'end' }, labelG, 'West');
+el('text', { x: (PLOT.x0 + PLOT.x1) / 2, y: PLOT.y1 + 48, 'text-anchor': 'middle' }, labelG, 'Hour angle · trail shows the last 3 minutes');
+const readoutText = el('text', { x: PLOT.x0 + 8, y: PLOT.y1 - 10, class: 'now' }, labelG, '—');
+
+const ARROW = { n: [0, -1], s: [0, 1], e: [-1, 0], w: [1, 0] };  // east is left, north is up
+
+function drawSky() {
+  trailG.replaceChildren();
+  trail.forEach((pt, i) => {
+    const [x, y] = skyXY(pt.ha, pt.dec);
+    el('circle', { cx: x, cy: y, r: 2.5, class: 'trail', opacity: ((i + 1) / trail.length) * 0.6 }, trailG);
+  });
+
+  targetG.replaceChildren();
+  if (skyTarget) {
+    const [x, y] = skyXY(skyTarget.ha, skyTarget.dec);
+    el('line', { x1: x - 9, y1: y, x2: x + 9, y2: y, class: 'target' }, targetG);
+    el('line', { x1: x, y1: y - 9, x2: x, y2: y + 9, class: 'target' }, targetG);
+  }
+
+  dotG.replaceChildren();
+  arrowG.replaceChildren();
+  if (!skyState) { readoutText.textContent = 'No position yet'; return; }
+  const [x, y] = skyXY(skyState.ha, skyState.dec);
+  el('circle', { cx: x, cy: y, r: 7, class: skyState.off ? 'dot off' : 'dot' }, dotG);
+  for (const dir of moving) {
+    const [dx, dy] = ARROW[dir];
+    const tx = x + dx * 56;
+    const ty = y + dy * 56;
+    el('line', { x1: x + dx * 12, y1: y + dy * 12, x2: tx, y2: ty, class: 'arrow' }, arrowG);
+    const px = -dy * 8;
+    const py = dx * 8;
+    el('polygon', { points: `${tx},${ty} ${tx - dx * 11 + px},${ty - dy * 11 + py} ${tx - dx * 11 - px},${ty - dy * 11 - py}`, class: 'arrow' }, arrowG);
+  }
+  const where = skyState.dec > NEAR_POLE ? ' · near the pole' : (skyState.off ? ' · off the chart' : '');
+  readoutText.textContent = `HA ${fmtHA(skyState.ha)} · Dec ${fmtDec(skyState.dec)}${where}`;
+}
+
+let lastLat = null;
+function updatePosition(s) {
+  const lst = hoursOf(s.position.lst);
+  const ra = hoursOf(s.position.ra);
+  const dec = degOf(s.position.dec);
+  const lat = degOf(s.site.lat);
+  if (lat !== null) lastLat = lat;
+  const haveFix = s.online && lst !== null && ra !== null && dec !== null;
+
+  if (haveFix) {
+    const ha = wrapHours(lst - ra);
+    skyState = { ha, dec, off: dec <= NEAR_POLE && (Math.abs(ha) > PLOT.haMax || dec < PLOT.decMin) };
+    trail.push({ ha, dec });
+    while (trail.length > 90) trail.shift();  // about 3 minutes at 2-second polls
+    setText('ha', fmtHA(ha));
+    if (lastLat !== null) {
+      const h = horizontal(ha, dec, lastLat);
+      setText('az', fmtDeg(h.az));
+      setText('hud_altaz', `Alt ${fmtDeg(h.alt)} · Az ${fmtDeg(h.az)}`);
+      if (view3d) {
+        // Pier side from :Gm#: E taken as the tube east of the pier, W as west; N lets the view choose.
+        const pier = s.position.pier === 'E' ? 1 : s.position.pier === 'W' ? -1 : null;
+        view3d.setPose({ ha, dec, lat: lastLat, pier, mode: mountMode || 'eq' });
+      }
+    }
+  }
+  const tRa = hoursOf(s.target.ra);
+  const tDec = degOf(s.target.dec);
+  if (lst !== null && tRa !== null && tDec !== null) skyTarget = { ha: wrapHours(lst - tRa), dec: tDec };
+  drawSky();
+}
+
+// ---- Button states follow the mount's own pages ----
+// Each stock button has an id the mount reports as enabled or disabled. In a choice group the
+// disabled one is the current choice; elsewhere disabled just means not available now.
+function applyStates(states, online) {
+  const groups = {};
   document.querySelectorAll('[data-ctl]').forEach((btn) => {
-    const state = s.control[btn.dataset.ctl];
-    btn.disabled = !s.online || (state !== undefined && state !== 'enabled');
+    const g = btn.dataset.radio;
+    if (g) (groups[g] = groups[g] || []).push(btn);
   });
-  document.querySelectorAll('[data-state-key]').forEach((btn) => {
-    const src = s[btn.dataset.stateSrc || 'settings'] || {};
-    btn.classList.toggle('current', src[btn.dataset.stateKey] === btn.dataset.stateValue);
+  const current = new Set();
+  for (const btns of Object.values(groups)) {
+    const off = btns.filter((b) => states[b.dataset.ctl] === 'disabled');
+    if (off.length === 1) current.add(off[0]);
+  }
+  document.querySelectorAll('[data-ctl]').forEach((btn) => {
+    const state = states[btn.dataset.ctl];
+    const isCurrent = current.has(btn);
+    btn.classList.toggle('current', isCurrent);
+    btn.disabled = !online || state === undefined || state === 'disabled';
   });
-  document.querySelectorAll('[data-show]').forEach((el) => {
-    const [src, key] = el.dataset.show.split(':');
-    el.textContent = (s[src] && s[src][key]) ?? '—';
+  document.querySelectorAll('[data-needs]').forEach((item) => {
+    item.classList.toggle('missing', online && states[item.dataset.needs] === undefined);
   });
 }
 
+function render(s) {
+  const online = !!s.online;
+  setText('link', online ? 'Online' : 'Offline');
+  $('link_dot').classList.toggle('on', online);
+  const states = { ...s.control, ...s.settings, ...s.auxiliary };
+
+  // Mount mode from the ALTAZM switch: the disabled button is the current mode.
+  mountMode = states.sw4_on === 'disabled' ? 'altaz' : states.sw4_off === 'disabled' ? 'eq' : null;
+  setText('mode', mountMode === 'altaz' ? 'Alt-Az' : mountMode === 'eq' ? 'Equatorial' : null);
+  $('mode_chip').classList.toggle('alert', mountMode === 'altaz');
+  setText('hud_mode', mountMode === 'altaz' ? 'Alt-Az mode' : mountMode === 'eq' ? 'Equatorial mode' : 'Mode unknown');
+  setText('trk', states.trk_on === 'disabled' ? 'On' : states.trk_off === 'disabled' ? 'Off' : null);
+
+  const st = s.status;
+  const parkText = st.parked === null ? null : st.parked ? 'Parked' : (st.at_home ? 'At home' : 'Not parked');
+  setText('parked', parkText);
+  $('park_chip').classList.toggle('dim', !st.parked);
+
+  setText('ra', s.position.ra);
+  setText('dec', prettyDec(s.position.dec));
+  setText('alt', prettyDec(s.position.alt));
+  setText('pier', s.position.pier);
+  setText('lst_now', s.position.lst);
+  setText('t_now_ra', s.target.ra);
+  setText('t_now_dec', prettyDec(s.target.dec));
+  setText('lat', prettyDec(s.site.lat));
+  setText('lon', prettyDec(s.site.lon));
+  setText('slew', st.slewing === null ? null : st.slewing ? 'Moving' : 'Idle');
+  setText('home', st.at_home === null ? null : st.at_home ? 'At home' : 'Away');
+  setText('gu', st.raw);
+  if (!online) { setText('ha', null); setText('az', null); setText('hud_altaz', 'No position: mount offline'); }
+
+  const sr = ['vs', 's', 'n', 'f', 'vf'].find((k) => states['sr_' + k] === 'disabled');
+  setText('slew_now', { vs: '0.5×', s: '0.75×', n: '1×', f: '1.5×', vf: '2×' }[sr]);
+
+  applyStates(states, online);
+  document.querySelectorAll('[data-show]').forEach((node) => {
+    const [src, key] = node.dataset.show.split(':');
+    node.textContent = (s[src] && s[src][key]) ?? '—';
+  });
+  updatePosition(s);
+  updateHudAxis();
+}
+
+function renderDashboard(d) {
+  if (!d.ok) return;
+  const v = d.values;
+  setText('d_slew', v.max_slew ? v.max_slew + ' °/s' : null);
+  setText('d_rate', v.tracking_rate ? v.tracking_rate + ' Hz' : null);
+  setText('d_pa', v.polar_alignment ? `◄ ${v.polar_alignment[0]}″  ▲ ${v.polar_alignment[1]}″` : null);
+  setText('d_flip', v.meridian_flips);
+  setText('d_load', v.workload);
+  setText('d_signal', v.signal);
+  setText('d_error', v.last_error);
+}
+
 async function loadConfig() {
-  const r = await api('/api/config');
+  let r;
+  try { r = await api('/api/config'); } catch (err) { return; }
   if (!r.ok) return;
-  document.querySelectorAll('[data-cfg-show]').forEach((el) => {
-    const v = r.values[el.dataset.cfgShow];
-    el.textContent = v === undefined ? 'not on the page' : v;
-  });
+  const v = r.values;
+  document.querySelectorAll('[data-cfg-show]').forEach((node) => { node.textContent = v[node.dataset.cfgShow] ?? '—'; });
   document.querySelectorAll('[data-cfg-input]').forEach((inp) => {
-    const v = r.values[inp.dataset.cfgInput];
-    if (v !== undefined && inp.value === '') inp.value = v;
+    if (v[inp.dataset.cfgInput] !== undefined && inp.value === '') inp.value = v[inp.dataset.cfgInput];
   });
+  document.querySelectorAll('[data-cfg-needs]').forEach((item) => item.classList.toggle('missing', v[item.dataset.cfgNeeds] === undefined));
+  if (v.g1 !== undefined) {
+    $('site_text').textContent = `Lon ${v.g1}° ${v.g2}′ ${v.g3}″ (W is +) · Lat ${v.t1}° ${v.t2}′ · UTC offset ${v.u1}`;
+  }
 }
 
 let statusBusy = false;
@@ -588,18 +1003,26 @@ async function refresh() {
   try {
     render(await api('/api/status'));
   } catch (err) {
-    $('conn').textContent = 'offline';
-    $('conn').className = 'state off';
+    setText('link', 'UI server down');
+    $('link_dot').classList.remove('on');
   } finally {
     statusBusy = false;
   }
 }
+async function refreshDashboard() {
+  try { renderDashboard(await api('/api/dashboard')); } catch (err) { /* status poll reports the link */ }
+}
 
-loadConfig();
+setInterval(() => { setText('utc_now', new Date().toISOString().slice(11, 19)); }, 1000);
+drawSky();
+updateHudAxis();
 refresh();
+refreshDashboard();
+loadConfig();
 setInterval(refresh, 2000);
-setInterval(loadConfig, 15000);
-logLine('Ready. Telescope commands go straight to the mount.');
+setInterval(refreshDashboard, 10000);
+setInterval(loadConfig, 30000);
+logLine('Ready. Commands go straight to the mount.');
 </script>
 </body>
 </html>

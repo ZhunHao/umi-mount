@@ -10,19 +10,23 @@ Standard library only.
 Every mount write goes through the whitelist below. Anything not listed is refused.
 """
 import argparse
+import html
 import json
 import re
 import socket
+import threading
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+IMG_DIR = HERE / "img"
+IMG_TYPES = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
+STATIC = {"mount3d.js": "application/javascript; charset=utf-8"}
 
 # Set from the command line in main().
 MOUNT_BASE = "http://192.168.0.1"
@@ -43,9 +47,11 @@ WRITES = {
         "ab": {"on", "off"}, "ma": {"on", "off"}, "mp": {"on", "off"}, "pk": {"s"},
         "rr": {"on", "off", "don", "doff", "otk"}, "ss": {"f", "n", "s", "vf", "vs"}, "tk": {"-", "f", "r"},
     },
+    # auxiliary.htm: x1v1 starts/stops the Camera-port intervalometer; x1v4 count, x1v2 exposure and
+    # x1v3 delay are raw slider positions (the mount turns them into seconds); x4v1 is Alt-Az mode.
     "auxiliaryA.txt": {
-        "x1v1": {"0", "1"}, "x4v1": {"0", "1"}, "x1v4": {"0", "1"},
-        "x1v2": (0.0, 1.0, False), "x1v3": (0.0, 1.0, False),
+        "x1v1": {"0", "1"}, "x4v1": {"0", "1"},
+        "x1v4": (1, 255, True), "x1v2": (0, 255, True), "x1v3": (10, 255, True),
     },
     "configurationA.txt": {
         "b1": (0, 3600, True), "b2": (0, 3600, True), "el": (-270, 270, True), "wl": (-270, 270, True),
@@ -80,8 +86,22 @@ def mount_get(path, timeout=3.0):
         return 0, str(err)
 
 
+LX_LOCK = threading.Lock()
+
+
 def lx200(cmd, wait=1.5):
-    """Send one LX200 command. Returns (reply without the trailing '#' or None, error or None)."""
+    """Send one LX200 command. Returns (reply without the trailing '#' or None, error or None).
+
+    Commands go one at a time so a status read and a command never share the port. Stop (:Q#)
+    skips the queue: it must not wait behind a slow read.
+    """
+    if cmd == "Q":
+        return _lx200_send(cmd, wait)
+    with LX_LOCK:
+        return _lx200_send(cmd, wait)
+
+
+def _lx200_send(cmd, wait):
     try:
         with socket.create_connection((LX_HOST, LX_PORT), timeout=wait) as sock:
             sock.sendall(f":{cmd}#".encode())
@@ -125,12 +145,13 @@ def page_inputs(html):
 
 
 def read_status():
-    # One LX200 connection at a time: the controller's command port may not take several at once.
-    with ThreadPoolExecutor(max_workers=3) as web, ThreadPoolExecutor(max_workers=1) as serial:
-        pages = {name: web.submit(mount_get, name) for name in ("control.txt", "settings.txt", "auxiliary.txt")}
-        lx = {key: serial.submit(lx200, cmd) for key, cmd in LX_READS.items()}
-        pages = {name: fut.result() for name, fut in pages.items()}
-        reply = {key: fut.result()[0] for key, fut in lx.items()}
+    # One request at a time: the mount's web server is a small ESP32. If control.txt doesn't
+    # answer, the mount is unreachable, so skip the rest instead of waiting out every timeout.
+    pages = {"control.txt": mount_get("control.txt")}
+    online = pages["control.txt"][0] == 200
+    for name in ("settings.txt", "auxiliary.txt"):
+        pages[name] = mount_get(name) if online else (0, "")
+    reply = {key: (lx200(cmd)[0] if online else None) for key, cmd in LX_READS.items()}
 
     def text_of(name):
         status, body = pages[name]
@@ -139,7 +160,7 @@ def read_status():
     gu = reply["status"] or ""
     return {
         "time": datetime.now().isoformat(timespec="seconds"),
-        "online": pages["control.txt"][0] == 200,
+        "online": online,
         "control": text_of("control.txt"),
         "settings": text_of("settings.txt"),
         "auxiliary": text_of("auxiliary.txt"),
@@ -155,6 +176,33 @@ def read_status():
             "slewing": ("N" not in gu) if gu else None,
         },
     }
+
+
+DASHBOARD = {
+    "polar_alignment": r"Polar Alignment:\s*◄\s*(-?[\d.]+)\s*\"?\s*▲\s*(-?[\d.]+)",
+    "workload": r"Workload:\s*([\d.]+%)",
+    "signal": r"Wireless signal strength:\s*(-?\d+\s*dBm\s*\(\d+%\))",
+    "last_error": r"Last General \(Background\) Error:\s*(.+?)\s+Workload",
+    "max_slew": r"Maximum slew speed:\s*([\d.]+)",
+    "tracking_rate": r"Tracking Rate:\s*([\d.]+)\s*Hz",
+    "meridian_flips": r"meridian flips\s+(On|Off)",
+    "pier_side": r"Pier Side=\s*(\w+)",
+    "parking": r"Parking:\s*(.+?)\s+Tracking:",
+}
+
+
+def read_dashboard():
+    """Readings that only the stock status page (index.htm) shows."""
+    status, page = mount_get("index.htm")
+    if status != 200:
+        return {"ok": False, "error": f"index.htm returned {status}"}
+    text = re.sub(r"<script.*?</script>", " ", page, flags=re.S | re.I)
+    text = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", text)))
+    out = {}
+    for key, pattern in DASHBOARD.items():
+        m = re.search(pattern, text)
+        out[key] = (list(m.groups()) if len(m.groups()) > 1 else m.group(1).strip()) if m else None
+    return {"ok": True, "values": out}
 
 
 def read_config():
@@ -245,7 +293,22 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json(200, read_status())
         if path == "/api/config":
             return self.send_json(200, read_config())
+        if path == "/api/dashboard":
+            return self.send_json(200, read_dashboard())
+        if path.startswith("/img/"):
+            return self.send_image(path[len("/img/"):])
+        if path.lstrip("/") in STATIC:
+            name = path.lstrip("/")
+            return self.send_bytes(200, (HERE / name).read_bytes(), STATIC[name])
         self.send_json(404, {"error": "not found"})
+
+    def send_image(self, name):
+        # Only plain file names directly inside mount_ui/img/. No subfolders, no "..".
+        target = IMG_DIR / name
+        if (Path(name).name != name or target.suffix.lower() not in IMG_TYPES
+                or not target.is_file()):
+            return self.send_json(404, {"error": "not found"})
+        self.send_bytes(200, target.read_bytes(), IMG_TYPES[target.suffix.lower()])
 
     def do_POST(self):
         if not self.host_allowed():

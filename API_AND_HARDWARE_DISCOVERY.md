@@ -1,156 +1,165 @@
-# UMi 17 Lite Mount (MeowAstro / OnStep) Discovery & API Reference
+# UMi 17 Lite (MeowAstro / OnStep): Hardware and API Reference
 
-This document records the hardware, network configuration, and HTTP API discovered from the **UMi 17 Lite** harmonic drive mount.
-
----
-
-## 1. Hardware & System Identification
-
-* **Device:** UMi 17 Lite (Proxisky / MeowAstro Harmonic Drive Mount)
-* **Controller:** ESP32 Microcontroller
-* **Firmware:** `MeowAstro WiFi Server 2.1v (OnStep 4.21e)`
-* **Active Web Interface:** HTTP Port 80
-* **Network Mode:** Access Point (SoftAP) by default; supports Station (STA) mode
+What the mount exposes over Wi-Fi, from the stock web pages and the probes on 2026-10-23 (raw results in `probe_output/`), plus the [OnStep command reference](https://onstep.groups.io/g/main/wiki/23755) for the LX200 commands.
 
 ---
 
-## 2. Network Specifications
+## 1. Identification
 
-| Parameter | Value | Notes |
-| :--- | :--- | :--- |
-| **Mount IP (Gateway)** | `192.168.0.1` | Static internal IP in AP mode |
-| **Client IP** | `192.168.0.100` | Assigned automatically to Mac / Phone via DHCP |
-| **Subnet Mask** | `255.255.255.0` | Broadcast: `192.168.0.255` |
-| **HTTP Web Server** | **Port 80 [OPEN]** | Fast HTTP/1.1 web server (`Transfer-Encoding: chunked`) |
-| **Celestron AUX / SkyPortal** | Port 2000 | Closed / Timed out (Uses OnStep architecture) |
-| **LX200 Command Port** | Port 9999 / 9998 | Available over serial / IP depending on firmware config |
+* **Device:** UMi 17 Lite harmonic mount (Proxisky).
+* **Firmware:** `MeowAstro WiFi Server 2.1v (OnStep 4.21e)`. Over LX200: `:GVP#` On-Step, `:GVN#` 4.21e, `:GVD#` Nov 2 2023, `:GVT#` 20:46:24.
+* **Wi-Fi side:** an OnStep "Smart Web Server" style add-on (web pages plus LX200 on 9999 and 9998). The board inside isn't identified.
+* **Back panel:** Camera (3.5 mm jack, driven by the intervalometer in section 4.3), Guide (RJ, ST-4), USB-B, DC 12–15 V. One check on the Mac listed no USB serial device, but it isn't confirmed the cable was connected.
 
 ---
 
-## 3. Discovered Web Pages & Endpoints
+## 2. Network
 
-The mount web server exposes the following pages:
-
-* `/index.htm` — Status Dashboard (Live coordinates, site info, tracking status, polar alignment error, workload)
-* `/control.htm` — Mount Motion & Operations (Directional guide, tracking toggle, slew rates, parking, alignment)
-* `/auxiliary.htm` — Auxiliary Features (Focuser, rotator, dew heater if configured)
-* `/settings.htm` — Mount Settings (Backlash, limits, guide rates)
-* `/configuration.htm` — Motor and Gear Ratio Configuration
-* `/wifi.htm` — Network Configuration (Station mode setup to connect to home Wi-Fi)
+| Item | Value | Notes |
+| :--- | :--- | :--- |
+| Mount address | `192.168.0.1` | Access-point mode, subnet `255.255.255.0` (from `wifi.htm` after login) |
+| Station mode | Not set up | Station SSID empty, so the mount's network has no internet |
+| HTTP | Port 80 | `.htm` pages are `Transfer-Encoding: chunked`; `.txt` files send `Content-Length`; every reply has `Connection: close` |
+| CORS | None | No `Access-Control-*` headers, so a page from another origin can send requests but can't read replies |
+| LX200 | Ports 9999 and 9998 | Both answer. OnStep docs: 9999 is the command channel, 9998 the persistent one |
+| Port 2000 | Closed | Celestron AUX is not used |
 
 ---
 
-## 4. HTTP Control API (`/controlA.txt`)
+## 3. Stock pages
 
-All control actions are dispatched as HTTP GET requests to:
-```http
-GET http://192.168.0.1/controlA.txt?<key>=<value>&x=<timestamp>
-```
-
-### 4.1. Manual Slewing (D-Pad)
-The mount implements a **press-to-move, release-to-stop** pattern:
-
-| Direction | Pointer Down (Start Move) | Pointer Up (Halt Move) |
+| Page | Holds | Polls |
 | :--- | :--- | :--- |
-| **North (Dec +)** | `GET /controlA.txt?dr=n1` | `GET /controlA.txt?dr=n0` |
-| **South (Dec -)** | `GET /controlA.txt?dr=s1` | `GET /controlA.txt?dr=s0` |
-| **East (RA +)** | `GET /controlA.txt?dr=e1` | `GET /controlA.txt?dr=e0` |
-| **West (RA -)** | `GET /controlA.txt?dr=w1` | `GET /controlA.txt?dr=w0` |
-
-### 4.2. Slew Rates
-
-| Speed Code | Rate | Description |
-| :--- | :--- | :--- |
-| `R0` | 0.25x | Fine Guiding |
-| `R1` | 0.5x | Standard Guiding |
-| `R2` | 1.0x | Centering Speed |
-| `R5` | 4.0x | Fast Centering |
-| `R6` | 40x | Find Rate |
-| `R7` | 60x | High Speed Find |
-| `R8` | MAX (~5.8°/s) | Maximum Slew Speed |
-
-*Command format:* `GET /controlA.txt?dr=R<number>`
-
-### 4.3. Mount Operations & Safety
-
-| Function | Command | Notes |
-| :--- | :--- | :--- |
-| **Emergency STOP** | `GET /controlA.txt?dr=qq` | Instantly stops all motor rotation |
-| **Find Home** | `GET /controlA.txt?dr=qh` | Slews to index / home sensor |
-| **Home (Reset)** | `GET /controlA.txt?dr=qr` | Sets current position as Home |
-| **Continue Goto** | `GET /controlA.txt?dr=qc` | Resumes a paused goto |
-| **Park Mount** | `GET /controlA.txt?dr=pk` | Parks telescope in safe orientation |
-| **Unpark Mount** | `GET /controlA.txt?dr=pu` | Unparks telescope for observing |
-| **Sync Coordinates** | `GET /controlA.txt?dr=sy` | Synchronizes mount position with target |
-
-### 4.4. Tracking Control
-
-| State / Rate | Command |
-| :--- | :--- |
-| **Tracking ON** | `GET /controlA.txt?dr=T1` |
-| **Tracking OFF** | `GET /controlA.txt?dr=T0` |
-| **Sidereal Rate** | `GET /controlA.txt?dr=Ts` |
-| **Lunar Rate** | `GET /controlA.txt?dr=Tl` |
-| **Solar Rate** | `GET /controlA.txt?dr=Th` |
-
-### 4.5. Full `dr=` List (Stock `control.htm`)
-
-Source: `raw_stock_ui/control.htm`, read 2026-10-23. Every control on the page sends one of these requests. Sections 4.1–4.4 cover the same codes; this table is the complete set, including the ones not listed above.
-
-| Button | Request | Notes |
-| :--- | :--- | :--- |
-| Motion start | `dr=n1`, `s1`, `e1`, `w1` | Pointer down |
-| Motion stop | `dr=n0`, `s0`, `e0`, `w0` | Pointer up |
-| Speed rates | `dr=R0`, `R1`, `R2`, `R5`, `R6`, `R7`, `R8` | The page has no `R3`, `R4` or `R9` buttons |
-| Emergency stop | `dr=qq` | |
-| Find home | `dr=qh` | |
-| Home (reset) | `dr=qr` | Behind `confirm()`. Sets the current position as home |
-| Continue goto | `dr=qc` | Enabled only when paused at home (`c_goto` in `control.txt`) |
-| Park / Unpark | `dr=pk` / `dr=pu` | |
-| Sync | `dr=sy` | Syncs to the **target**, not the telescope's position. See the warning below |
-| Tracking | `dr=T1`, `T0`, `Ts`, `Tl`, `Th` | Section 4.4 |
-| Alignment | `controlA.txt?al=1`, `al=3`, `al=9`, `al=n` | Buttons `alg1`, `alg2`, `alg3`, `alga`. Enabled via `control.txt` |
-| Unlabelled | `controlA.txt?rp=a` | The `rpa` button, behind `confirm()`, with no title. Function not identified. Don't press until it is |
-| Set date/time | `GET /control.htm?qb=st&dd=…&dm=…&dy=…&th=…&tm=…&ts=…` | A form submit to the page, not `controlA.txt`. Writes the mount clock from the browser. Not tested |
-
-Notes:
-* The page has **no goto button**. Goto isn't a stock HTTP function. Use LX200 on port 9999 instead ([OnStep command reference](https://onstep.groups.io/g/main/wiki/23755)).
-* **Sync warning:** `dr=sy` syncs to the current target, and the page can't set the target. On 2026-10-23 the target was `00:00:00 +00*00:00`. Pressing Sync wrote RA 0h, Dec 0° into the mount's model while the telescope was near the pole, which broke the pointing. To sync correctly, set the target over LX200 first (`:SrHH:MM:SS#`, then `:SdsDD:MM:SS#`), then send `:CS#`, per the same wiki.
-* Every request is a GET with no confirmation. `200` means the mount accepted it, not that it ran.
+| `/index.htm` | Status: UT and LST, site, current and target coordinates, pier side and meridian-flip setting, polar alignment error, parking, tracking, tracking rate, maximum slew speed, last error, workload, Wi-Fi signal | Nothing (server-rendered) |
+| `/control.htm` | Move pad, speeds, tracking, park and home, alignment, sync, set date/time | `control.txt` |
+| `/settings.htm` | Maximum slew speed, compensated tracking, tracking rate trim, set park, goto buzzer, meridian-flip options | `settings.txt` |
+| `/auxiliary.htm` | Camera-port intervalometer, ALTAZM (Alt-Az mode) | `auxiliary.txt` |
+| `/configuration.htm` | Site, horizon and overhead limits, backlash, meridian limits | Nothing (values are in the inputs; `configuration.txt` is 404) |
+| `/wifi.htm` | Login form; after login, access-point and station settings | Nothing |
 
 ---
 
-## 5. Telemetry & Polling Endpoint (`/control.txt`)
+## 4. Commands
 
-The web UI polls `http://192.168.0.1/control.txt` to update the enabled/disabled state of buttons:
+Every write is `GET /<page>A.txt?<key>=<value>&x=<timestamp>`. There is no login. A `200` with an empty body means the mount accepted the request, not that anything happened.
+
+### 4.1. `controlA.txt` (stock `control.htm`)
+
+| Button (stock label) | Request | Notes |
+| :--- | :--- | :--- |
+| Move N, S, E, W | `dr=n1`, `s1`, `e1`, `w1` on press; `n0`, `s0`, `e0`, `w0` on release | The stock pad has East on the left, West on the right |
+| Speed `0.25`, `0.5`, `1x`, `4x`, `40x`, `60x`, `Max` | `dr=R0`, `R1`, `R2`, `R5`, `R6`, `R7`, `R8` | No `R3`, `R4` or `R9` buttons |
+| Emergency Stop! | `dr=qq` | |
+| Find Home | `dr=qh` | Moves to the home position |
+| Home (Reset) | `dr=qr` | Behind `confirm()`. Tells the mount it is at home now |
+| Continue Goto (when paused at home) | `dr=qc` | Button `c_goto` |
+| Park / Un-Park | `dr=pk` / `dr=pu` | Buttons `park` / `unpark` |
+| Tracking on / off | `dr=T1` / `dr=T0` | Buttons `trk_on` / `trk_off` |
+| Sidereal / Lunar / Solar Rate | `dr=Ts` / `Tl` / `Th` | |
+| Sync | `dr=sy` | Syncs to the **target**. See the warning below |
+| `1★`, `3★`, `9★`, `Accept` | `al=1`, `al=3`, `al=9`, `al=n` | Star alignment. Buttons `alg1`, `alg2`, `alg3`, `alga` |
+| `Refine PA` | `rp=a` | Behind `confirm()`. Refines polar alignment; button `rpa` was disabled (not available) throughout 2026-10-23 |
+| Set Date/Time | `GET /control.htm?qb=st&dd=…&dm=…&dy=…&th=…&tm=…&ts=…` | A form submit, not `controlA.txt`. `dm` is the 0-based month. Accepted on 2026-10-23 |
+
+* The stock pages have **no goto button**. Goto is LX200 only (section 4.5).
+* **Sync warning:** `dr=sy` and `:CS#` take the current *target* as where the telescope points, and the stock page can't set the target. On 2026-10-23 the target was `00:00:00 +00*00:00`, so Sync wrote RA 0h, Dec 0° into the pointing model while the tube was near the pole. Set the target first (`:SrHH:MM:SS#`, `:SdsDD:MM:SS#`), centre that object, then sync.
+
+### 4.2. `settingsA.txt` (stock `settings.htm`)
+
+| Setting (stock label) | Request | Reported in `settings.txt` as |
+| :--- | :--- | :--- |
+| Maximum Slew Speed: VFast (2x), Fast (1.5x), Normal (1x), Slow (0.75x), VSlow (0.5x) | `ss=vf`, `f`, `n`, `s`, `vs` | `sr_vf` … `sr_vs` |
+| Compensated Tracking Rate (Pointing Model/Refraction): Full, Refraction Only, Off | `rr=otk`, `on`, `off` | `ot_on`, `ot_ref`, `ot_off` |
+| … Dual Axis, Single Axis | `rr=don`, `doff` | `ot_dul`, `ot_sgl` |
+| Tracking Rate: + (0.02Hz faster), - (0.02Hz slower), Reset (default) | `tk=f`, `tk=-`, `tk=r` | Not reported |
+| Park: Set-Park | `pk=s` | Not reported. Makes the current position the park position |
+| Goto Alert, Buzzer: On, Off | `ab=on`, `off` | `bzr_on`, `bzr_off` |
+| Automatic Meridian Flip at Limit: On, Off | `ma=on`, `off` | `mfa_on`, `mfa_off` |
+| Meridian Flip, Pause at Home: On, Off | `mp=on`, `off` | `mfp_on`, `mfp_off` |
+| Language (page script, not tested) | `lang=0` Chinese, `lang=1` English | Takes effect after a restart |
+
+`index.htm`'s "Maximum slew speed" followed `ss` on 2026-10-23: 5.8, 4.4, 2.9, 1.9 and 1.5 °/s for `vf`, `f`, `n`, `s` and `vs`.
+
+### 4.3. `auxiliaryA.txt` (stock `auxiliary.htm`)
+
+| Control (stock label) | Request | Reported in `auxiliary.txt` as |
+| :--- | :--- | :--- |
+| •CAMERA• Start / Stop (intervalometer on the Camera jack) | `x1v1=1` / `x1v1=0` | `x1v1` (`-` when idle) |
+| Count (slider 1–255) | `x1v4=<position>` | `x1v4`, the count |
+| Exposure (slider 0–255) | `x1v2=<position>` | `x1v2`, in seconds (0.016 at the stock default) |
+| Delay (slider 10–255) | `x1v3=<position>` | `x1v3`, in seconds (0.02 at the stock default) |
+| •ALTAZM• On / Off (Alt-Az mode) | `x4v1=1` / `x4v1=0` | `sw4_on` / `sw4_off` |
+
+* The sliders send raw positions and the mount converts them. Decimal seconds (`x1v2=0.030`) were ignored on 2026-10-23.
+* Turning ALTAZM on made `settings.txt` stop reporting `mfa`, `mfp` and `ot`, and `configuration.htm` stop showing `el` and `wl`.
+
+### 4.4. `configurationA.txt` (stock `configuration.htm`)
+
+| Input | Meaning | Range |
+| :--- | :--- | :--- |
+| `g1`, `g2`, `g3` | Longitude degrees, minutes, seconds. **W is +** | ±180° |
+| `t1`, `t2`, `t3` | Latitude degrees, minutes, seconds. N is + | ±90° |
+| `u1`, `u2` | UTC offset hours and minutes (`0`, `30`, `45`). The opposite of a time-zone value, for standard time | −14 to +12 h |
+| `hl` | Horizon limit, minimum altitude | ±30° |
+| `ol` | Overhead limit, maximum altitude | 60–90° |
+| `b1`, `b2` | Backlash, axis 1 (RA/Azm) and axis 2 (Dec/Alt) | 0–3600″ |
+| `el`, `wl` | Past the meridian when east / west of the pier | ±270°. Hidden in Alt-Az mode |
+
+`hl`, `ol`, `b1` and `b2` were each changed and restored on 2026-10-23, and the page showed the new values.
+
+### 4.5. LX200 on TCP 9999 / 9998
+
+* **Reads that answered:** `:GVP#` `:GVN#` `:GVD#` `:GVT#` `:GU#` `:GC#` `:Ga#` `:GL#` `:GS#` `:GG#` `:Gt#` `:Gg#` `:Gm#` `:GT#` `:Gh#` `:Go#` `:GM#`–`:GP#` `:GR#` `:GD#` `:GA#` `:Gr#` `:Gd#` `:D#` `:VR#`. The focuser queries (`:FA#` and so on) answer `0`: no focuser.
+* **`:GU#` status letters:** `P` parked, `p` not parked, `H` at home, `N` not slewing (OnStep reference).
+* **Writes used:** `:SrHH:MM:SS#` and `:SdsDD:MM:SS#` reply `1` (accepted). `:MS#` goto, `:CS#` sync, `:hC#` go home, `:hF#` set home and `:Q#` stop reply nothing.
+* **Don't send:** `:ERESET#`, `:ENVRESET#` (reset, erase settings), `:SBn#` (serial speed), `:$QZ!#` (PEC to EEPROM), `:LW…#`, `:LL#`, `:L!#` (catalog writes). `mount_lx200.py` refuses these unless given `--force`.
+
+---
+
+## 5. Telemetry files
+
+`control.txt`, `settings.txt` and `auxiliary.txt` are `id|enabled` or `id|disabled` lines, one per stock button. The stock pages poll them and enable or disable the buttons with those ids.
+
+* **In a choice group** (`trk_on`/`trk_off`, `sr_*`, `ot_on`/`ot_ref`/`ot_off`, `bzr_*`, `mfa_*`, `mfp_*`, `sw4_*`) the disabled button is the current choice. So `trk_on|disabled` means tracking is on.
+* **Elsewhere** (`park`, `unpark`, `c_goto`, `alg1`–`alga`, `rpa`, `ot_dul`/`ot_sgl`) disabled just means not available now.
+* **Don't read `park`/`unpark` as the parking state.** Both samples showed Not Parked on `index.htm` with opposite button states:
+  * `park|enabled`, `unpark|disabled` (stock dump in `raw_stock_ui/`): "Not Parked", tracking on.
+  * `park|disabled`, `unpark|enabled` (2026-10-23): "Not Parked ( At Home )", tracking off.
+
+  Use the `Parking:` line on `index.htm`, or `:GU#`.
 
 ```text
-trk_on|disabled
-trk_off|enabled
-park|enabled
-unpark|disabled
-c_goto|disabled
-alg1|disabled
-alg2|disabled
-alg3|disabled
-alga|disabled
-rpa|enabled
+control.txt                 settings.txt (equatorial)     auxiliary.txt
+trk_on|enabled              bzr_on|disabled               x1v1|-
+trk_off|disabled            bzr_off|enabled               x1v2|0.016
+park|disabled               mfa_on|enabled                x1v3|0.02
+unpark|enabled              mfa_off|disabled              x1v4|0
+c_goto|disabled             mfp_on|enabled                sw4_on|enabled
+alg1|enabled                mfp_off|disabled              sw4_off|disabled
+alg2|enabled                ot_on|enabled
+alg3|enabled                ot_ref|enabled
+alga|disabled               ot_off|disabled
+rpa|disabled                ot_dul|disabled
+                            ot_sgl|disabled
+                            sr_vf|disabled
+                            sr_f|enabled  (… sr_n, sr_s, sr_vs enabled)
 ```
-
-*Interpretation:*
-* If `trk_on` is `disabled`, tracking is currently **ACTIVE (ON)**. This matches the dashboard in both samples.
-* Don't read `park`/`unpark` as the parking state. Both samples show **Not Parked** on the dashboard, with opposite button states:
-  * `park|enabled`, `unpark|disabled` (stock dump in `raw_stock_ui/`): dashboard "Not Parked", tracking On.
-  * `park|disabled`, `unpark|enabled` (2026-10-23 probe): dashboard "Not Parked (At Home)", tracking Off.
-* To check parking, read the `Parking:` line on `index.htm`, or the `:GU#` status letter: `P` = parked, `p` = not parked ([OnStep command reference](https://onstep.groups.io/g/main/wiki/23755)).
 
 ---
 
-## 6. Project Directory Contents
+## 6. Wi-Fi page
 
-* `index.html` — The new modern, mobile-friendly, dark-mode touch web controller.
-* `raw_stock_ui/index.htm` — The original stock status webpage from the mount.
-* `raw_stock_ui/control.htm` — The original stock control webpage from the mount.
-* `raw_stock_ui/control.txt` — The original stock telemetry dump.
-* `API_AND_HARDWARE_DISCOVERY.md` — This documentation file.
-* `README.md` — Quick start guide.
+`POST /wifi.htm` with `login=<web password>` returns the configuration form. Fields: `stssid`, `stpwd` (station), `webpwd` (web password), `apen` (access point on), `apip1`–`4`, `apgw1`–`4`, `apsn1`–`4`, `apmac`, and `ccto` / `wcto` (command and web serial read time-outs, ms).
+
+On 2026-10-23 the access point was on at `192.168.0.1`, the station SSID and password were empty, and both time-outs were 60. Writing this form wasn't tested. A wrong station setting can cut off Wi-Fi access, though OnStep's docs say the access point comes back if station mode can't connect.
+
+---
+
+## 7. Files in this repo
+
+* `mount_ui/`: the control page (`server.py`, `index.html`, `mount3d.js`) and its tests. See `README.md`.
+* `probe_mount.sh`: read-only probe; results in `probe_output/<timestamp>/`. `--sweep` searches the local network.
+* `mount_cmd.sh`: sends one HTTP command and logs it to `probe_output/mount-actions.log`.
+* `mount_lx200.py`: sends LX200 commands on port 9999 and prints the replies.
+* `probe_output/`: probe runs, command logs and saved stock pages from 2026-10-23.
+* `raw_stock_ui/`: stock pages saved in an earlier session.

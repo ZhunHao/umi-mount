@@ -2,6 +2,7 @@
 # Usage: ./mount_cmd.sh 'controlA.txt?dr=qq'
 # One GET to the mount. Appends time, request and reply to probe_output/mount-actions.log.
 set -u
+if [ $# -ne 1 ]; then echo "Usage: ./mount_cmd.sh 'controlA.txt?dr=qq'" >&2; exit 2; fi
 DIR="$(cd "$(dirname "$0")" && pwd)/probe_output"
 mkdir -p "$DIR"
 LOG="$DIR/mount-actions.log"

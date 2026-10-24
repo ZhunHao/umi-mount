@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Read-only probe for the UMi 17 Lite / MeowAstro (OnStep) mount.
 #
-# Usage:  ./probe_mount.sh [mount-ip]
+# Usage:  ./probe_mount.sh [--sweep] [mount-ip]
+#   --sweep  if the mount isn't at its usual addresses, try every address on this /24.
+#            Off by default: on someone else's network that is a port scan.
 #
 # Sends only:
 #   - HTTP GETs for the mount's pages and telemetry
@@ -28,6 +30,8 @@ is_mount() {
 }
 
 # 1. Find the mount ---------------------------------------------------------
+SWEEP=0
+if [ "${1:-}" = "--sweep" ]; then SWEEP=1; shift; fi
 MOUNT="${1:-}"
 
 if [ -z "$MOUNT" ]; then
@@ -45,7 +49,7 @@ if [ -z "$MOUNT" ]; then
   done
 fi
 
-if [ -z "$MOUNT" ]; then
+if [ -z "$MOUNT" ] && [ "$SWEEP" = 1 ]; then
   MY_IP="$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null)"
   if [ -n "$MY_IP" ]; then
     PREFIX="${MY_IP%.*}"
@@ -59,6 +63,7 @@ fi
 if [ -z "$MOUNT" ]; then
   log "Mount not found. Join the 6semount Wi-Fi, or re-run with the IP:"
   log "  ./probe_mount.sh <mount-ip>"
+  log "or try every address on this network: ./probe_mount.sh --sweep"
   exit 1
 fi
 
