@@ -6,3 +6,12 @@ mount_ui/img/
 
 # Python bytecode
 __pycache__/
+
+# OS artifacts
+.DS_Store
+
+# AI assistant conversation records and session logs
+CONVERSATION_RECORD.md
+session_logs/
+*.jsonl
+
